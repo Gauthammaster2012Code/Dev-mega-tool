@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint-staged if available, but do not block commits during early setup
+if command -v npx >/dev/null 2>&1; then
+  npx --no -- lint-staged || true
+fi
