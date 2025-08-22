@@ -34,6 +34,27 @@ export class Persistence {
 				resolution TEXT,
 				success INTEGER NOT NULL
 			);
+
+			CREATE TABLE IF NOT EXISTS ai_findings (
+				id TEXT PRIMARY KEY,
+				created_at TEXT NOT NULL,
+				severity TEXT NOT NULL,
+				patterns TEXT NOT NULL,
+				root_causes TEXT NOT NULL,
+				suggestions TEXT NOT NULL
+			);
+
+			CREATE TABLE IF NOT EXISTS visual_results (
+				id TEXT PRIMARY KEY,
+				created_at TEXT NOT NULL,
+				url TEXT NOT NULL,
+				diff_pixels INTEGER NOT NULL,
+				width INTEGER NOT NULL,
+				height INTEGER NOT NULL,
+				baseline_path TEXT NOT NULL,
+				output_path TEXT NOT NULL,
+				diff_path TEXT NOT NULL
+			);
 		`);
     }
     recordTestRun(id, result, reportPath) {
@@ -53,6 +74,18 @@ export class Persistence {
 			 VALUES (?, datetime('now'), ?, ?, ?)`);
         stmt.run(id, JSON.stringify(files), resolution, success ? 1 : 0);
         this.log.debug({ id, count: files.length }, "Recorded merge conflict");
+    }
+    recordAIFindings(id, findings) {
+        const stmt = this.db.prepare(`INSERT INTO ai_findings (id, created_at, severity, patterns, root_causes, suggestions)
+			 VALUES (?, datetime('now'), ?, ?, ?, ?)`);
+        stmt.run(id, findings.severity, JSON.stringify(findings.patterns), JSON.stringify(findings.rootCauses), JSON.stringify(findings.suggestions));
+        this.log.debug({ id }, "Recorded AI findings");
+    }
+    recordVisualResult(id, args) {
+        const stmt = this.db.prepare(`INSERT INTO visual_results (id, created_at, url, diff_pixels, width, height, baseline_path, output_path, diff_path)
+			 VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?)`);
+        stmt.run(id, args.url, args.diffPixels, args.width, args.height, args.baselinePath, args.outputPath, args.diffPath);
+        this.log.debug({ id, url: args.url }, "Recorded visual result");
     }
     // Basic queries that could be used by learning components
     getRecentFailures(limit = 20) {

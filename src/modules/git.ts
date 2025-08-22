@@ -4,6 +4,8 @@ import { createChildLogger } from "../shared/logger.js";
 
 const generateId = customAlphabet("123456789abcdefghijkmnopqrstuvwxyz", 6);
 
+type ConflictStrategy = "ours" | "theirs";
+
 export class GitOps {
 	private readonly git: SimpleGit;
 	private readonly log = createChildLogger("git-ops");
@@ -42,5 +44,21 @@ export class GitOps {
 	async hasUnmergedFiles(): Promise<boolean> {
 		const result = await this.git.raw(["ls-files", "-u"]);
 		return result.trim().length > 0;
+	}
+
+	async listUnmergedFiles(): Promise<string[]> {
+		const output = await this.git.raw(["diff", "--name-only", "--diff-filter=U"]);
+		return output
+			.split("\n")
+			.map((s) => s.trim())
+			.filter(Boolean);
+	}
+
+	async resolveConflicts(files: string[], strategy: ConflictStrategy): Promise<void> {
+		for (const file of files) {
+			await this.git.raw(["checkout", strategy === "ours" ? "--ours" : "--theirs", "--", file]);
+			await this.git.add([file]);
+		}
+		await this.commitAll(`chore(ai-merge): resolve conflicts using ${strategy}`);
 	}
 }

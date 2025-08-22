@@ -37,5 +37,19 @@ export class GitOps {
         const result = await this.git.raw(["ls-files", "-u"]);
         return result.trim().length > 0;
     }
+    async listUnmergedFiles() {
+        const output = await this.git.raw(["diff", "--name-only", "--diff-filter=U"]);
+        return output
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean);
+    }
+    async resolveConflicts(files, strategy) {
+        for (const file of files) {
+            await this.git.raw(["checkout", strategy === "ours" ? "--ours" : "--theirs", "--", file]);
+            await this.git.add([file]);
+        }
+        await this.commitAll(`chore(ai-merge): resolve conflicts using ${strategy}`);
+    }
 }
 //# sourceMappingURL=git.js.map

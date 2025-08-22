@@ -10,6 +10,9 @@ import { VisualRunner } from "../modules/visualRunner.js";
 import { MergeResolver } from "../modules/mergeResolver.js";
 import { eventBus } from "../shared/events.js";
 import { SelfHealing } from "../modules/selfHealing.js";
+import { Persistence } from "../modules/persistence.js";
+import { resolve } from "node:path";
+import { nanoid } from "nanoid";
 
 export async function createHttpServer(repoRoot: string): Promise<FastifyInstance> {
 	const log = createChildLogger("http");
@@ -18,6 +21,7 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 	await rules.ensureExists();
 	const git = new GitOps(repoRoot);
 	await git.ensureRepo();
+	const db = new Persistence(resolve(repoRoot, ".ai-tool.db"));
 
 	fastify.get("/health", async () => ({ ok: true }));
 
@@ -31,6 +35,7 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 		const runner = new TestRunner();
 		const results = await runner.runAll();
 		eventBus.publish({ type: "test-results", payload: results });
+		db.recordTestRun(nanoid(8), results, results.reports?.jest || null);
 		await rules.update({
 			currentBranch: branch,
 			testResults: {
@@ -48,9 +53,10 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 	fastify.post("/analyze", async () => {
 		const runner = new TestRunner();
 		const results = await runner.runAll();
-		const ai = new AIEvals();
+		const ai = AIEvals.fromEnv();
 		const findings = await ai.evaluate(results);
 		eventBus.publish({ type: "ai-findings", payload: findings });
+		db.recordAIFindings(nanoid(8), findings);
 		await rules.update({
 			testResults: {
 				passed: results.passed,
@@ -89,6 +95,15 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 		const { url = "http://localhost:3000", name = "home" } = body;
 		const visual = new VisualRunner(repoRoot);
 		const res = await visual.runOnce(url, name);
+		db.recordVisualResult(nanoid(8), {
+			url: res.url,
+			diffPixels: res.diffPixels,
+			width: res.width,
+			height: res.height,
+			baselinePath: res.baselinePath,
+			outputPath: res.outputPath,
+			diffPath: res.diffPath,
+		});
 		eventBus.publish({ type: "visual-results", payload: res });
 		return res;
 	});
@@ -97,6 +112,34 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 		const merge = new MergeResolver(git);
 		const plan = await merge.resolveWithAI();
 		return plan;
+	});
+
+	fastify.post("/orchestrate", async () => {
+		await rules.setTask("run-tests", "running");
+		const branch = await git.createTempBranch("orchestrate");
+		const runner = new TestRunner();
+		const results = await runner.runAll();
+		db.recordTestRun(nanoid(8), results, results.reports?.jest || null);
+		const ai = AIEvals.fromEnv();
+		const findings = await ai.evaluate(results);
+		db.recordAIFindings(nanoid(8), findings);
+		const healer = new SelfHealing(git);
+		const applied = await healer.applySuggestions(branch, findings.suggestions || []);
+		const rerun = await runner.runAll();
+		db.recordTestRun(nanoid(8), rerun, rerun.reports?.jest || null);
+		await rules.update({
+			currentBranch: branch,
+			testResults: {
+				passed: rerun.passed,
+				failed: rerun.failed,
+				skipped: rerun.skipped,
+				reportPath: rerun.reports?.jest ?? null,
+				lastRunAt: new Date().toISOString(),
+			},
+			task: { id: null, type: "run-tests", status: "complete", updatedAt: new Date().toISOString() },
+			aiFix: { status: "complete", summary: `Applied: ${applied.applied}`, lastAppliedAt: new Date().toISOString() },
+		});
+		return { initial: results, findings, applied, final: rerun };
 	});
 
 	return fastify;

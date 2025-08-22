@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+RULES_FILE='.ai-tool-rules.json'
+if [ -f "$RULES_FILE" ]; then
+	STATUS=$(node -e "const f=require('fs'); try{const j=JSON.parse(f.readFileSync('.ai-tool-rules.json','utf8')); console.log(j.task?.status||'idle');}catch(e){console.log('idle')}")
+	if [ "$STATUS" = "running" ]; then
+		echo "MCP task is running; push blocked. Wait for completion."
+		exit 1
+	fi
+fi
