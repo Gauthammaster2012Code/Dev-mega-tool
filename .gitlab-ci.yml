@@ -1,0 +1,15 @@
+stages:
+  - test
+
+orchestrate:
+  stage: test
+  image: node:20
+  script:
+    - npm ci
+    - npm run build
+    - npm run orchestrate
+  variables:
+    NODE_ENV: test
+  only:
+    - merge_requests
+    - main

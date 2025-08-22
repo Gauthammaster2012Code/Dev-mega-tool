@@ -1,0 +1,19 @@
+name: MCP Orchestrate
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+jobs:
+  orchestrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - run: npm run orchestrate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ORCH_VISUAL_URL: http://localhost:3000
