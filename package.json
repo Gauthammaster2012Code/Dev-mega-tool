@@ -13,6 +13,8 @@
 		"prepare": "husky"
 	},
 	"dependencies": {
+		"@anthropic-ai/sdk": "0.21.1",
+		"@google/generative-ai": "0.21.0",
 		"better-sqlite3": "11.7.0",
 		"dotenv": "16.4.5",
 		"esbuild": "0.24.0",
@@ -20,6 +22,7 @@
 		"fast-check": "3.19.0",
 		"fastify": "4.28.1",
 		"nanoid": "5.0.7",
+		"node-fetch": "3.3.2",
 		"octokit": "4.0.2",
 		"openai": "4.58.1",
 		"pino": "9.5.0",
@@ -30,8 +33,7 @@
 		"puppeteer-core": "23.7.0",
 		"simple-git": "3.27.0",
 		"ws": "8.18.0",
-		"zod": "3.23.8",
-		"node-fetch": "3.3.2"
+		"zod": "3.23.8"
 	},
 	"devDependencies": {
 		"@types/better-sqlite3": "7.6.12",
