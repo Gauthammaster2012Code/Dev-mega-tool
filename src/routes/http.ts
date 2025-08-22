@@ -5,6 +5,11 @@ import { RulesFileManager } from "../modules/rulesFile.js";
 import { TestRunner } from "../modules/testRunner.js";
 import { AIEvals } from "../modules/aiEvals.js";
 import { GitOps } from "../modules/git.js";
+import { Formatter } from "../modules/formatter.js";
+import { VisualRunner } from "../modules/visualRunner.js";
+import { MergeResolver } from "../modules/mergeResolver.js";
+import { eventBus } from "../shared/events.js";
+import { SelfHealing } from "../modules/selfHealing.js";
 
 export async function createHttpServer(repoRoot: string): Promise<FastifyInstance> {
 	const log = createChildLogger("http");
@@ -25,6 +30,7 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 		const branch = await git.createTempBranch("tests");
 		const runner = new TestRunner();
 		const results = await runner.runAll();
+		eventBus.publish({ type: "test-results", payload: results });
 		await rules.update({
 			currentBranch: branch,
 			testResults: {
@@ -40,11 +46,11 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 	});
 
 	fastify.post("/analyze", async () => {
-		const state = await rules.read();
 		const runner = new TestRunner();
 		const results = await runner.runAll();
 		const ai = new AIEvals();
 		const findings = await ai.evaluate(results);
+		eventBus.publish({ type: "ai-findings", payload: findings });
 		await rules.update({
 			testResults: {
 				passed: results.passed,
@@ -58,14 +64,39 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 		return findings;
 	});
 
-	fastify.post("/fix-conflicts", async () => {
-		// TODO: implement merge conflict detection and AI-assisted resolution
-		return { ok: true, message: "Not implemented yet" };
+	fastify.post("/apply-fixes", async (req) => {
+		const body = (req.body as any) || {};
+		const { suggestions = [] } = body;
+		const branch = await git.createTempBranch("fixes");
+		const healer = new SelfHealing(git);
+		const res = await healer.applySuggestions(branch, suggestions);
+		eventBus.publish({ type: "fix-applied", payload: res });
+		await rules.update({
+			currentBranch: branch,
+			aiFix: { status: "complete", summary: `Applied: ${res.applied}, Skipped: ${res.skipped}`, lastAppliedAt: new Date().toISOString() },
+		});
+		return res;
 	});
 
 	fastify.post("/format", async () => {
-		// TODO: call Prettier/ESLint, for now stub
-		return { ok: true, message: "Formatting applied (stub)" };
+		const fmt = new Formatter();
+		const out = await fmt.run();
+		return out;
+	});
+
+	fastify.post("/visual", async (req, reply) => {
+		const body = (req.body as any) || {};
+		const { url = "http://localhost:3000", name = "home" } = body;
+		const visual = new VisualRunner(repoRoot);
+		const res = await visual.runOnce(url, name);
+		eventBus.publish({ type: "visual-results", payload: res });
+		return res;
+	});
+
+	fastify.post("/fix-conflicts", async () => {
+		const merge = new MergeResolver(git);
+		const plan = await merge.resolveWithAI();
+		return plan;
 	});
 
 	return fastify;

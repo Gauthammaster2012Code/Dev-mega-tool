@@ -3,6 +3,7 @@ import type { RawData } from "ws";
 import { createServer } from "http";
 import { createChildLogger } from "../shared/logger.js";
 import { RulesFileManager } from "../modules/rulesFile.js";
+import { eventBus } from "../shared/events.js";
 
 export async function createWsServer(repoRoot: string, port: number): Promise<{
 close: () => void }> {
@@ -13,6 +14,18 @@ close: () => void }> {
 
 	const server = createServer();
 	const wss = new WebSocketServer({ server });
+
+	function broadcast(json: unknown): void {
+		const text = JSON.stringify(json);
+		for (const client of wss.clients) {
+			if (client.readyState === WebSocket.OPEN) client.send(text);
+		}
+	}
+
+	// Subscribe to global events
+	eventBus.on("event", (evt) => {
+		broadcast(evt);
+	});
 
 	wss.on("connection", async (ws: WebSocket) => {
 		log.info("WS client connected");
