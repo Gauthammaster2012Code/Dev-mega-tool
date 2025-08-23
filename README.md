@@ -150,3 +150,45 @@ npm i -D mdt-mega-tool@github:Gauthammaster2012Code/Dev-mega-tool#main
 ```bash
 npm i -D mdt-mega-tool@github:Gauthammaster2012Code/Dev-mega-tool#<tag-or-commit>
 ```
+
+### MCP config (JSON example)
+
+- Using built output (`dist/index.js`):
+```json
+{
+  "mcpServers": {
+    "mdt": {
+      "command": "node",
+      "args": [
+        "./dist/index.js"
+      ],
+      "env": {
+        "MCP_HTTP_PORT": "7040",
+        "MCP_WS_PORT": "7041"
+      }
+    }
+  }
+}
+```
+
+- Using tsx in development:
+```json
+{
+  "mcpServers": {
+    "mdt": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "tsx",
+        "src/index.ts"
+      ],
+      "env": {
+        "MCP_HTTP_PORT": "7040",
+        "MCP_WS_PORT": "7041"
+      }
+    }
+  }
+}
+```
+
+Note: The HTTP JSON endpoint at `/mcp` requires the project key from `MCP_KEY.md` for all methods except `key_verify`. Obtain the key by reading `MCP_KEY.md` and include it as `X-MCP-Key` header when calling the endpoint directly. IDEs that only use the server process (command/args) don’t need to pass headers explicitly.
