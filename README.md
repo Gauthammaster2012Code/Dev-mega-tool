@@ -96,3 +96,20 @@ curl -s -X POST \
 - The key never leaves the repository; it’s generated locally and persisted in `MCP_KEY.md`.
 - Logs redact secrets.
 - The MCP endpoint returns 401 for missing/invalid keys.
+
+### Quickstart
+
+- Initialize project config:
+```bash
+npm run mega-tool -- run init_project --json-params '{}'
+```
+
+- Generate tests:
+```bash
+npm run mega-tool -- run generate_test_cases --json-params '{"sourceFiles":["src/index.ts"]}'
+```
+
+- Run demo end-to-end:
+```bash
+bash ./scripts/demo-mdt.sh
+```

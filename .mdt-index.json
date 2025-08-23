@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-08-23T11:04:41.511Z",
+  "generatedAt": "2025-08-23T11:08:29.242Z",
   "files": [
     {
       "path": "src/cicd/github-actions.ts",
@@ -177,6 +177,14 @@
       "hasTests": false
     },
     {
+      "path": "src/modules/testGen.ts",
+      "language": "ts",
+      "exports": [
+        "generateNodeTests"
+      ],
+      "hasTests": false
+    },
+    {
       "path": "src/modules/testRunner.ts",
       "language": "ts",
       "exports": [
@@ -217,6 +225,14 @@
       "hasTests": false
     },
     {
+      "path": "src/shared/errors.ts",
+      "language": "ts",
+      "exports": [
+        "createError"
+      ],
+      "hasTests": false
+    },
+    {
       "path": "src/shared/events.ts",
       "language": "ts",
       "exports": [
@@ -230,6 +246,17 @@
       "exports": [
         "logger",
         "createChildLogger"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/shared/tasks.ts",
+      "language": "ts",
+      "exports": [
+        "createTask",
+        "setTaskState",
+        "getTask",
+        "listTasks"
       ],
       "hasTests": false
     },
@@ -278,7 +305,7 @@
     }
   ],
   "languages": {
-    "ts": 31
+    "ts": 34
   },
   "coverage": {
     "src/cicd/github-actions.ts": {
@@ -369,6 +396,10 @@
       "tests": [],
       "covered": false
     },
+    "src/modules/testGen.ts": {
+      "tests": [],
+      "covered": false
+    },
     "src/modules/testRunner.ts": {
       "tests": [],
       "covered": false
@@ -389,11 +420,19 @@
       "tests": [],
       "covered": false
     },
+    "src/shared/errors.ts": {
+      "tests": [],
+      "covered": false
+    },
     "src/shared/events.ts": {
       "tests": [],
       "covered": false
     },
     "src/shared/logger.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/shared/tasks.ts": {
       "tests": [],
       "covered": false
     },

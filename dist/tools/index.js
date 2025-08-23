@@ -8,11 +8,13 @@ import { RulesFileManager } from "../modules/rulesFile.js";
 import { Analyzer } from "../modules/analyzer.js";
 import { PuppeteerGenerator } from "../modules/puppeteerGen.js";
 import { loadMdtConfig, saveMdtConfig, verifyApiKey } from "../modules/mdtConfig.js";
-import { readdir } from "node:fs/promises";
+import { readdir, writeFile, mkdir } from "node:fs/promises";
 import { MdtRulesManager } from "../modules/mdtRules.js";
 import { Persistence } from "../modules/persistence.js";
 import { nanoid } from "nanoid";
 import { verifyMcpKey } from "../modules/mcpKey.js";
+import { spawn } from "node:child_process";
+import { generateNodeTests } from "../modules/testGen.js";
 // Git tools
 export async function make_git_branch(params) {
     try {
@@ -102,8 +104,16 @@ export async function find_test_patterns() {
     return { ok: true, payload: { patterns: ["setup/teardown detection TODO"] } };
 }
 // Test generation
-export async function generate_test_cases() {
-    return { ok: true, payload: { files: [] } };
+export async function generate_test_cases(params) {
+    try {
+        const repoRoot = resolve(process.cwd());
+        const srcs = params?.sourceFiles && params.sourceFiles.length ? params.sourceFiles : ["src/index.ts"];
+        const out = await generateNodeTests(repoRoot, srcs, params?.outDir || ".mdt/out/tests");
+        return { ok: true, payload: out };
+    }
+    catch (err) {
+        return { ok: false, error: { code: "MDT_GEN", message: err?.message || String(err) } };
+    }
 }
 export async function generate_puppeteer_tests(params) {
     try {
@@ -122,7 +132,16 @@ export async function generate_property_tests() {
 export async function run_tests() {
     try {
         const runner = new TestRunner();
-        const results = await runner.runAll();
+        let results = await runner.runAll();
+        if (!results || (results.passed + results.failed + results.skipped === 0)) {
+            // Fallback to Node test runner
+            results = await new Promise((resolveRun) => {
+                const p = spawn(process.execPath, ["--test"], { stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, CI: "true" } });
+                let stdout = "";
+                p.stdout.on("data", (d) => (stdout += d.toString()));
+                p.on("close", () => resolveRun({ passed: 0, failed: 0, skipped: 0, reports: {}, raw: { stdout }, durationMs: 0 }));
+            });
+        }
         const repoRoot = resolve(process.cwd());
         const db = new Persistence(resolve(repoRoot, ".ai-tool.db"));
         db.recordTestRun(nanoid(8), results, results.reports?.jest || null);
@@ -240,7 +259,24 @@ export async function setup_config(params) {
         return { ok: false, error: { code: "MDT_CONFIG", message: err?.message || String(err) } };
     }
 }
-export async function init_project() { return { ok: true, payload: {} }; }
+export async function init_project() {
+    try {
+        const repoRoot = resolve(process.cwd());
+        await mkdir(resolve(repoRoot, ".mdt"), { recursive: true });
+        const example = {
+            aiProvider: "openai",
+            defaultTestFramework: "jest",
+            branchPrefix: "mdt/",
+            autoFixPolicy: "conservative",
+            privacy: { shareWithAI: false },
+        };
+        await writeFile(resolve(repoRoot, ".mdt/config.json"), JSON.stringify(example, null, 2), "utf8");
+        return { ok: true, payload: { created: [".mdt/config.json"] } };
+    }
+    catch (err) {
+        return { ok: false, error: { code: "MDT_CONFIG", message: err?.message || String(err) } };
+    }
+}
 export async function update_rules() { return { ok: true, payload: {} }; }
 // IDE integration
 export async function connect_cursor() { return { ok: true, payload: {} }; }
