@@ -1,6 +1,16 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { resolve, basename } from "node:path";
 import { createChildLogger } from "../shared/logger.js";
+import { z } from "zod";
+const stepSchema = z.object({
+    type: z.enum(["click", "fill", "waitFor"]),
+    selector: z.string().optional(),
+    value: z.string().optional(),
+    waitFor: z.string().optional(),
+});
+const scenarioSchema = z.object({ name: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/), steps: z.array(stepSchema).max(200) });
+const paramsSchema = z.object({ pages: z.array(z.string()).min(1).max(50), scenarios: z.array(scenarioSchema).min(1).max(50), visualTesting: z.boolean().optional(), outputDir: z.string().optional() });
+function escapeJsSingleQuoted(str) { return str.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\r/g, "\\r").replace(/\n/g, "\\n").replace(/\t/g, "\\t"); }
 export class PuppeteerGenerator {
     repoRoot;
     log = createChildLogger("puppeteer-gen");
@@ -8,13 +18,18 @@ export class PuppeteerGenerator {
         this.repoRoot = repoRoot;
     }
     async generate(params) {
-        const outDir = resolve(this.repoRoot, params.outputDir || ".mdt/out/puppeteer");
+        const parsed = paramsSchema.safeParse(params);
+        if (!parsed.success) {
+            throw Object.assign(new Error("Invalid Puppeteer parameters"), { code: "MDT_PUPPETEER_INPUT_INVALID", details: parsed.error.issues });
+        }
+        const safe = parsed.data;
+        const outDir = resolve(this.repoRoot, safe.outputDir || ".mdt/out/puppeteer");
         await mkdir(outDir, { recursive: true });
         const files = [];
-        const template = this.buildTemplate(params.visualTesting === true);
-        for (const sc of params.scenarios) {
+        const template = this.buildTemplate(safe.visualTesting === true);
+        for (const sc of safe.scenarios) {
             const file = resolve(outDir, `${sc.name}.spec.mdt.js`);
-            const content = template(sc, params.pages);
+            const content = template(sc, safe.pages);
             await writeFile(file, content, "utf8");
             files.push(file);
             this.log.info({ file }, "Generated Puppeteer test");
@@ -39,17 +54,20 @@ function ensureDir(p) { try { mkdirSync(p, { recursive: true }); } catch {}}
 async function runDevice(name, viewport) {
 	if (!CHROME_PATH) { console.warn('[MDT] CHROME_PATH not set, skipping test'); return { skipped: true }; }
 	const browser = await puppeteer.launch({ executablePath: CHROME_PATH, headless: 'new' });
-	const page = await browser.newPage();
-	await page.setViewport(viewport);
-	for (const p of ${JSON.stringify(pages)}) { await page.goto(p, { waitUntil: 'networkidle0' }); }
-	${scenario.steps.map((s) => this.renderStep(s)).join("\n\t")}
-	let visual = null;
-	${visual ? this.renderVisualBlock(scenario.name) : ""}
-	await browser.close();
-	return { skipped: false, visual };
+	try {
+		const page = await browser.newPage();
+		await page.setViewport(viewport);
+		for (const p of ${JSON.stringify(pages)}) { await page.goto(p, { waitUntil: 'networkidle0' }); }
+		${scenario.steps.map((s) => this.renderStep(s)).join("\n\t")}
+		let visual = null;
+		${visual ? this.renderVisualBlock(scenario.name) : ""}
+		return { skipped: false, visual };
+	} finally {
+		try { await browser.close(); } catch {}
+	}
 }
 
-describe('${scenario.name}', () => {
+describe('${escapeJsSingleQuoted(scenario.name)}', () => {
 	it('desktop', async () => {
 		await runDevice('desktop', { width: 1366, height: 768, deviceScaleFactor: 1 });
 	});
@@ -61,18 +79,19 @@ describe('${scenario.name}', () => {
     }
     renderStep(step) {
         switch (step.type) {
-            case "click": return `await page.click('${step.selector}');`;
-            case "fill": return `await page.fill('${step.selector}', '${step.value || ""}');`;
-            case "waitFor": return `await page.waitForSelector('${step.selector || step.waitFor}');`;
+            case "click": return `await page.click('${escapeJsSingleQuoted(step.selector || '')}');`;
+            case "fill": return `await page.fill('${escapeJsSingleQuoted(step.selector || '')}', '${escapeJsSingleQuoted(step.value || '')}');`;
+            case "waitFor": return `await page.waitForSelector('${escapeJsSingleQuoted(step.selector || step.waitFor || '')}');`;
             default: return `// unknown step`;
         }
     }
     renderVisualBlock(name) {
+        const safe = basename(name).replace(/[^a-zA-Z0-9_-]/g, '-');
         return `const outDir = resolve(process.cwd(), '.mdt/out/puppeteer-artifacts');
 	ensureDir(outDir);
-	const currentPath = resolve(outDir, '${name}.png');
-	const baselinePath = resolve(outDir, '${name}.baseline.png');
-	const diffPath = resolve(outDir, '${name}.diff.png');
+	const currentPath = resolve(outDir, '${safe}.png');
+	const baselinePath = resolve(outDir, '${safe}.baseline.png');
+	const diffPath = resolve(outDir, '${safe}.diff.png');
 	const buffer = await page.screenshot({ fullPage: true });
 	writeFileSync(currentPath, buffer);
 	if (!existsSync(baselinePath)) { writeFileSync(baselinePath, buffer); }

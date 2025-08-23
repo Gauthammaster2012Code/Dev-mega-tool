@@ -15,6 +15,7 @@ import { nanoid } from "nanoid";
 import { verifyMcpKey } from "../modules/mcpKey.js";
 import { spawn } from "node:child_process";
 import { generateNodeTests } from "../modules/testGen.js";
+import { PlaywrightGenerator } from "../modules/playwrightGen.js";
 
 export type ToolResult<T = any> = { ok: boolean; payload?: T; error?: { code: string; message: string; retryable?: boolean; suggestedAction?: string } };
 
@@ -125,6 +126,21 @@ export async function generate_puppeteer_tests(params: { pages: string[]; scenar
 	}
 }
 
+export async function generate_playwright_tests(params: { pages: string[]; scenarios: Array<{ name: string; steps: Array<{ type: "click"|"fill"|"waitFor"; selector?: string; value?: string; waitFor?: string }> }>; visualTesting?: boolean; outputDir?: string; validateExecution?: boolean }): Promise<ToolResult<{ files: string[]; execution?: any }>> {
+	try {
+		const gen = new PlaywrightGenerator(process.cwd());
+		const out = await gen.generate({ pages: params.pages, scenarios: params.scenarios as any, visualTesting: params.visualTesting, outputDir: params.outputDir });
+		let execution = undefined as any;
+		if (params.validateExecution) {
+			execution = await run_playwright_specs({ glob: (params.outputDir || '.mdt/out/playwright') + '/**/*.js', timeoutMs: 30_000 });
+		}
+		return { ok: true, payload: { ...out, execution } };
+	} catch (err: any) {
+		const code = err?.code || 'MDT_GEN';
+		return { ok: false, error: { code, message: err?.message || String(err) } };
+	}
+}
+
 export async function generate_property_tests(): Promise<ToolResult<{ files: string[] }>> {
 	return { ok: true, payload: { files: [] } };
 }
@@ -149,6 +165,33 @@ export async function run_tests(): Promise<ToolResult> {
 		return { ok: true, payload: results };
 	} catch (err: any) {
 		return { ok: false, error: { code: "MDT_TEST", message: err?.message || String(err) } };
+	}
+}
+
+export async function run_playwright_specs(params?: { glob?: string; timeoutMs?: number }): Promise<ToolResult<{ passed: number; failed: number; skipped: number; reports: any; raw: any }>> {
+	try {
+		const glob = params?.glob || ".mdt/out/playwright/**/*.js";
+		return await new Promise((resolveRun) => {
+			const mocha = spawn("npx", ["--yes", "mocha", "--reporter", "json", glob], { stdio: ["ignore", "pipe", "pipe"] });
+			let stdout = "";
+			let killed = false;
+			const timer = setTimeout(() => { if (!killed) { killed = true; try { mocha.kill("SIGKILL"); } catch {} } }, Math.max(10_000, Math.min(300_000, params?.timeoutMs || 60_000)));
+			mocha.stdout.on("data", (d) => (stdout += d.toString()));
+			mocha.on("error", (err) => { clearTimeout(timer); resolveRun({ ok: false, error: { code: "MDT_PLAYWRIGHT", message: err?.message || String(err) } } as any); });
+			mocha.on("close", () => {
+				clearTimeout(timer);
+				if (killed) return resolveRun({ ok: false, error: { code: "MDT_PLAYWRIGHT_TIMEOUT", message: "Playwright specs timed out" } } as any);
+				try {
+					const json = JSON.parse(stdout || "{}");
+					const payload = { passed: Number(json.stats?.passes ?? 0), failed: Number(json.stats?.failures ?? 0), skipped: Number(json.stats?.pending ?? 0), reports: { mocha: true }, raw: json };
+					resolveRun({ ok: true, payload } as any);
+				} catch (e: any) {
+					resolveRun({ ok: false, error: { code: "MDT_PLAYWRIGHT_PARSE", message: e?.message || String(e) } } as any);
+				}
+			});
+		});
+	} catch (err: any) {
+		return { ok: false, error: { code: "MDT_PLAYWRIGHT", message: err?.message || String(err) } } as any;
 	}
 }
 
@@ -312,10 +355,12 @@ export const MDT_TOOLS = {
 	// Test generation
 	generate_test_cases,
 	generate_puppeteer_tests,
+	generate_playwright_tests,
 	generate_property_tests,
 	
 	// Test execution
 	run_tests,
+	run_playwright_specs,
 	run_tests_with_ai_eval,
 	run_visual_tests,
 	

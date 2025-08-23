@@ -39,6 +39,7 @@ Env vars:
 - DASHSCOPE_API_KEY=... (optional)
 - AI_PROVIDER=openai|gemini|claude|qwen (optional)
 - ORCH_VISUAL_URL=http://localhost:3000 (optional)
+- MDT_PW_SKIP=1 (optional; skip Playwright browser actions in generated specs)
 
 ## Endpoints
 - GET /health
@@ -113,3 +114,17 @@ npm run mega-tool -- run generate_test_cases --json-params '{"sourceFiles":["src
 ```bash
 bash ./scripts/demo-mdt.sh
 ```
+
+## Playwright and Puppeteer Dependencies
+
+- Playwright: this project uses `playwright-core`. To run browsers locally, install at least one browser engine or the full `playwright` package:
+  - `npm i -D playwright` (installs Chromium/WebKit/Firefox)
+  - Or install a single engine via `npx playwright install chromium`
+- Puppeteer: provide `CHROME_PATH` or `PUPPETEER_EXECUTABLE_PATH` to a Chrome/Chromium executable.
+
+Generated specs include cleanup and retries. Set `MDT_PW_SKIP=1` to skip browser actions in headless environments.
+
+### Windows tsx note
+If you install from git, the CLI may run via tsx. Ensure `tsx` is installed locally or use the compiled CLI:
+- `npm i -D tsx` then `npx mdt --help`
+- Or build first: `npm ci && npm run build && node bin/mdt.js --help`

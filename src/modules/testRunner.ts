@@ -20,9 +20,13 @@ export class TestRunner {
 				stdio: ["ignore", "pipe", "pipe"],
 			});
 			let stdout = "";
+			let killed = false;
+			const timer = setTimeout(() => { if (!killed) { killed = true; try { jest.kill("SIGKILL"); } catch {} } }, 60_000);
 			jest.stdout.on("data", (d) => (stdout += d.toString()));
-			jest.on("error", () => resolve(null));
+			jest.on("error", () => { clearTimeout(timer); resolve(null); });
 			jest.on("close", () => {
+				clearTimeout(timer);
+				if (killed) return resolve(null);
 				try {
 					const json = JSON.parse(stdout || "{}");
 					resolve({
@@ -45,9 +49,13 @@ export class TestRunner {
 				stdio: ["ignore", "pipe", "pipe"],
 			});
 			let stdout = "";
+			let killed = false;
+			const timer = setTimeout(() => { if (!killed) { killed = true; try { mocha.kill("SIGKILL"); } catch {} } }, 60_000);
 			mocha.stdout.on("data", (d) => (stdout += d.toString()));
-			mocha.on("error", () => resolve(null));
+			mocha.on("error", () => { clearTimeout(timer); resolve(null); });
 			mocha.on("close", () => {
+				clearTimeout(timer);
+				if (killed) return resolve(null);
 				try {
 					const json = JSON.parse(stdout || "{}");
 					resolve({
