@@ -87,7 +87,7 @@ export class PlaywrightGenerator {
 // scenario: ${scenario.name}
 // generatedAt: ${new Date().toISOString()}
 
-import { firefox } from 'playwright-core';
+import { firefox, chromium, webkit } from 'playwright-core';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -98,12 +98,14 @@ function ensureDir(p) { try { mkdirSync(p, { recursive: true }); } catch (e) { c
 async function launchWithRetry(retries = 2) {
 	let last;
 	for (let i = 0; i <= retries; i++) {
-		try {
-			return await firefox.launch();
-		} catch (e) {
-			last = e;
-			await new Promise(r => setTimeout(r, 200 * (i + 1)));
+		for (const engine of [firefox, chromium, webkit]) {
+			try {
+				return await engine.launch();
+			} catch (e) {
+				last = e;
+			}
 		}
+		await new Promise(r => setTimeout(r, 200 * (i + 1)));
 	}
 	throw last;
 }
@@ -128,7 +130,7 @@ async function runDevice(name, viewport) {
 	}
 }
 
-describe('${scenario.name}', () => {
+describe('${escapeJsSingleQuoted(scenario.name)}', () => {
 	it('desktop', async () => {
 		await runDevice('desktop', { width: 1366, height: 768, deviceScaleFactor: 1 });
 	});
