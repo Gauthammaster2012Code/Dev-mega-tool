@@ -11,6 +11,111 @@
 - IDE plugin templates (Cursor, Windsurf)
 - CI/CD: GitHub Actions, GitLab, Jenkins
 
+## Installation
+
+### As a Dependency
+
+Install the package in your project:
+
+```bash
+npm install @mcp-tools/mega-tool
+```
+
+### Basic Usage
+
+```javascript
+import { 
+  TestRunner, 
+  AIEvals, 
+  SimpleAIProvider, 
+  startServer,
+  logger 
+} from '@mcp-tools/mega-tool';
+
+// Run tests
+const testRunner = new TestRunner();
+const results = await testRunner.runAll();
+
+// Analyze with AI
+const provider = new SimpleAIProvider();
+const aiEvals = new AIEvals(provider);
+const findings = await aiEvals.analyze({ testResults: results });
+
+// Start the MCP server
+const server = await startServer({
+  repoRoot: process.cwd(),
+  httpPort: 7040,
+  wsPort: 7041
+});
+```
+
+### TypeScript Support
+
+Full TypeScript support with type definitions:
+
+```typescript
+import type { 
+  TestRunResult, 
+  AIProvider, 
+  TaskKind, 
+  Logger 
+} from '@mcp-tools/mega-tool';
+```
+
+### Available Exports
+
+#### Core Classes
+- `TestRunner` - Test orchestration (Jest/Mocha autodetect)
+- `AIEvals` - AI analysis and evaluation
+- `GitOps` - Git operations and branch management
+- `Formatter` - Code formatting utilities
+- `VisualRunner` - Visual regression testing
+- `MergeResolver` - Merge conflict resolution
+- `SelfHealing` - Self-healing apply-fix loop
+- `Persistence` - SQLite data persistence
+- `RulesFileManager` - Rules file management
+
+#### AI Providers
+- `SimpleAIProvider` - Local heuristic provider (default)
+- `OpenAIProvider` - OpenAI integration
+- `GeminiProvider` - Google Gemini integration
+- `ClaudeProvider` - Anthropic Claude integration
+- `QwenProvider` - Qwen integration
+
+#### Server Functions
+- `createHttpServer(repoRoot)` - Create HTTP server instance
+- `createWsServer(repoRoot, port)` - Create WebSocket server instance
+- `startServer(options)` - Start both HTTP and WebSocket servers
+
+#### Utilities
+- `logger` - Pino logger instance
+- `createChildLogger(name)` - Create child logger
+- `eventBus` - Event bus for inter-component communication
+- `loadConfig(repoRoot)` - Load configuration
+- `createPullRequest(params)` - GitHub PR creation
+
+#### Types
+- `TestRunResult` - Test execution results
+- `AIProvider` - AI provider interface
+- `TaskKind` - Task type definitions
+- `TaskStatus` - Task status definitions
+- `FixSuggestion` - Fix suggestion structure
+- `AIEvalFindings` - AI analysis results
+- `Logger` - Logger type
+- `AppConfig` - Application configuration
+
+### Standalone Usage
+
+Clone and run as a standalone server:
+
+```bash
+git clone <repository-url>
+cd mcp-mega-tool
+npm install
+npm run build
+npm start
+```
+
 ## Providers
 Supported AI providers (choose via env):
 - Local heuristic (default)
@@ -25,7 +130,7 @@ Optional overrides:
 
 ## Setup
 
-- Node.js >= 20
+- Node.js >= 18
 - npm ci
 - npm run build
 - npm run dev
