@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { setup_config, generate_test_cases } from '../dist/tools/index.js';
+import { setup_config, generate_test_cases, generate_playwright_tests } from '../dist/tools/index.js';
 
 test('setup_config stores provider and verification result (no network)', async () => {
 	const res = await setup_config({ aiProvider: 'openai', apiKey: 'sk-test-noop', testConnection: false });
@@ -12,4 +12,10 @@ test('generate_test_cases creates files', async () => {
 	const res = await generate_test_cases({ sourceFiles: ['src/index.ts'] });
 	assert.equal(res.ok, true);
 	assert.ok(res.payload?.files.length && res.payload.files[0].includes('.mdt/out/tests'));
+});
+
+test('generate_playwright_tests creates files', async () => {
+	const res = await generate_playwright_tests({ pages: ['about:blank'], scenarios: [{ name: 'smoke', steps: [] }], visualTesting: false });
+	assert.equal(res.ok, true);
+	assert.ok(res.payload?.files.length && res.payload.files[0].includes('.mdt/out/playwright'));
 });
