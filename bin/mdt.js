@@ -1,21 +1,20 @@
 #!/usr/bin/env node
 
-// Try to load compiled CLI, fallback to tsx/ts-node during development
-const { resolve } = require('node:path');
-const { existsSync } = require('node:fs');
+import { resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 
-const distCli = resolve(__dirname, '../dist/cli/mdt.js');
-const srcCliTs = resolve(__dirname, '../src/cli/mdt.ts');
+const distCli = resolve(new URL('.', import.meta.url).pathname, '../dist/cli/mdt.js');
+const srcCliTs = resolve(new URL('.', import.meta.url).pathname, '../src/cli/mdt.ts');
 
 (async () => {
 	if (existsSync(distCli)) {
-		require(distCli);
+		const mod = await import(distCli);
 		return;
 	}
 	try {
-		// Attempt to run via tsx if available
-		require('tsx/cli');
-		process.argv.splice(2, 0, srcCliTs);
+		const p = spawn(process.execPath, [resolve(process.cwd(), 'node_modules/.bin/tsx'), srcCliTs, ...process.argv.slice(2)], { stdio: 'inherit' });
+		p.on('exit', (code) => process.exit(code || 0));
 	} catch (err) {
 		console.error('[mdt] Failed to load compiled CLI and tsx is not available. Please run `npm run build` first.');
 		console.error(err && err.stack ? err.stack : String(err));

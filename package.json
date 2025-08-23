@@ -10,7 +10,11 @@
 		"orchestrate": "tsx src/cli/orchestrate.ts",
 		"cursor:client": "tsx src/ide-plugins/cursor.ts",
 		"windsurf:client": "tsx src/ide-plugins/windsurf.ts",
+		"mega-tool": "node ./bin/mdt.js",
 		"prepare": "husky"
+	},
+	"bin": {
+		"mdt": "bin/mdt.js"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "0.21.1",

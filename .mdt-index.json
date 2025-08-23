@@ -1,0 +1,393 @@
+{
+  "generatedAt": "2025-08-23T10:51:30.799Z",
+  "files": [
+    {
+      "path": "src/cicd/github-actions.ts",
+      "language": "ts",
+      "exports": [],
+      "hasTests": false
+    },
+    {
+      "path": "src/cicd/gitlab-ci.ts",
+      "language": "ts",
+      "exports": [],
+      "hasTests": false
+    },
+    {
+      "path": "src/cicd/jenkins.ts",
+      "language": "ts",
+      "exports": [],
+      "hasTests": false
+    },
+    {
+      "path": "src/cli/mdt.ts",
+      "language": "ts",
+      "exports": [],
+      "hasTests": false
+    },
+    {
+      "path": "src/cli/orchestrate.ts",
+      "language": "ts",
+      "exports": [],
+      "hasTests": false
+    },
+    {
+      "path": "src/ide-plugins/cursor.ts",
+      "language": "ts",
+      "exports": [
+        "runCursorClient"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/ide-plugins/windsurf.ts",
+      "language": "ts",
+      "exports": [
+        "runWindsurfClient"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/index.ts",
+      "language": "ts",
+      "exports": [],
+      "hasTests": false
+    },
+    {
+      "path": "src/mcp/adapter.ts",
+      "language": "ts",
+      "exports": [
+        "callMDTTool"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/aiEvals.ts",
+      "language": "ts",
+      "exports": [
+        "SimpleAIProvider",
+        "OpenAIProvider",
+        "GeminiProvider",
+        "ClaudeProvider",
+        "QwenProvider",
+        "AIEvals"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/analyzer.ts",
+      "language": "ts",
+      "exports": [
+        "Analyzer"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/formatter.ts",
+      "language": "ts",
+      "exports": [
+        "Formatter"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/git.ts",
+      "language": "ts",
+      "exports": [
+        "GitOps"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/mdtConfig.ts",
+      "language": "ts",
+      "exports": [
+        "loadMdtConfig",
+        "saveMdtConfig",
+        "verifyApiKey"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/mdtRules.ts",
+      "language": "ts",
+      "exports": [
+        "MdtRulesManager"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/mergeResolver.ts",
+      "language": "ts",
+      "exports": [
+        "MergeResolver"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/persistence.ts",
+      "language": "ts",
+      "exports": [
+        "Persistence"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/pr.ts",
+      "language": "ts",
+      "exports": [
+        "createPullRequest"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/puppeteerGen.ts",
+      "language": "ts",
+      "exports": [
+        "PuppeteerGenerator"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/rulesFile.ts",
+      "language": "ts",
+      "exports": [
+        "RulesFileManager"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/selfHealing.ts",
+      "language": "ts",
+      "exports": [
+        "SelfHealing"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/testRunner.ts",
+      "language": "ts",
+      "exports": [
+        "TestRunner"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/visualRunner.ts",
+      "language": "ts",
+      "exports": [
+        "VisualRunner"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/routes/http.ts",
+      "language": "ts",
+      "exports": [
+        "createHttpServer"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/routes/ws.ts",
+      "language": "ts",
+      "exports": [
+        "createWsServer"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/shared/config.ts",
+      "language": "ts",
+      "exports": [
+        "loadConfig"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/shared/events.ts",
+      "language": "ts",
+      "exports": [
+        "eventBus"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/shared/logger.ts",
+      "language": "ts",
+      "exports": [
+        "logger",
+        "createChildLogger"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/shared/types.ts",
+      "language": "ts",
+      "exports": [],
+      "hasTests": false
+    },
+    {
+      "path": "src/tools/index.ts",
+      "language": "ts",
+      "exports": [
+        "make_git_branch",
+        "switch_branch",
+        "merge_mdt_branch",
+        "check_git_status",
+        "analyze_codebase",
+        "detect_test_framework",
+        "find_test_patterns",
+        "generate_test_cases",
+        "generate_puppeteer_tests",
+        "generate_property_tests",
+        "run_tests",
+        "run_tests_with_ai_eval",
+        "run_visual_tests",
+        "fix_test_failures",
+        "fix_code_issues",
+        "resolve_conflicts",
+        "get_task_status",
+        "check_active_tasks",
+        "get_completed_work",
+        "check_rules",
+        "setup_config",
+        "init_project",
+        "update_rules",
+        "connect_cursor",
+        "connect_windsurf",
+        "sync_ide_context",
+        "cleanup_branches",
+        "cleanup_status",
+        "MDT_TOOLS"
+      ],
+      "hasTests": false
+    }
+  ],
+  "languages": {
+    "ts": 30
+  },
+  "coverage": {
+    "src/cicd/github-actions.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/cicd/gitlab-ci.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/cicd/jenkins.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/cli/mdt.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/cli/orchestrate.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/ide-plugins/cursor.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/ide-plugins/windsurf.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/index.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/mcp/adapter.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/aiEvals.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/analyzer.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/formatter.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/git.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/mdtConfig.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/mdtRules.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/mergeResolver.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/persistence.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/pr.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/puppeteerGen.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/rulesFile.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/selfHealing.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/testRunner.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/visualRunner.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/routes/http.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/routes/ws.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/shared/config.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/shared/events.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/shared/logger.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/shared/types.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/tools/index.ts": {
+      "tests": [],
+      "covered": false
+    }
+  },
+  "arch": "unknown"
+}
