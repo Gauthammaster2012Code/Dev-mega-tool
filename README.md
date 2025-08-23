@@ -113,3 +113,40 @@ npm run mega-tool -- run generate_test_cases --json-params '{"sourceFiles":["src
 ```bash
 bash ./scripts/demo-mdt.sh
 ```
+
+### Install as a dependency (GitHub)
+
+- Dev dependency (recommended alias for clean uninstall):
+```bash
+npm i -D mdt-mega-tool@github:Gauthammaster2012Code/Dev-mega-tool#main
+```
+
+- Dev dependency (HTTPS alias):
+```bash
+npm i -D mdt-mega-tool@git+https://github.com/Gauthammaster2012Code/Dev-mega-tool.git#main
+```
+
+- Production dependency:
+```bash
+npm i mdt-mega-tool@github:Gauthammaster2012Code/Dev-mega-tool#main
+```
+
+- Uninstall (using the alias above):
+```bash
+npm uninstall mdt-mega-tool
+```
+
+- If you installed without an alias (not recommended), uninstall by the package name declared in this repo (`workspace`):
+```bash
+npm uninstall workspace
+```
+
+- Update to latest `main` (reinstall):
+```bash
+npm i -D mdt-mega-tool@github:Gauthammaster2012Code/Dev-mega-tool#main
+```
+
+- Pin to a specific tag/commit:
+```bash
+npm i -D mdt-mega-tool@github:Gauthammaster2012Code/Dev-mega-tool#<tag-or-commit>
+```
