@@ -15,7 +15,7 @@ const srcCliTs = resolve(here, '../src/cli/mdt.ts');
 		return;
 	}
 	// Prefer package-local tsx if present, otherwise fall back to npx tsx
-	const localTsx = resolve(here, '../node_modules/.bin/tsx');
+	const localTsx = resolve(here, '../node_modules/.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
 	const args = [srcCliTs, ...process.argv.slice(2)];
 	try {
 		let child;
