@@ -1,8 +1,53 @@
 {
-	"name": "workspace",
+	"name": "@mcp-tools/mega-tool",
 	"version": "1.0.0",
-	"description": "MCP Mega-Tool",
+	"description": "MCP Mega-Tool - A comprehensive Model Context Protocol toolkit",
 	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"bin": {
+		"mcp": "dist/cli/index.js"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./modules/*": {
+			"types": "./dist/modules/*.d.ts",
+			"import": "./dist/modules/*.js"
+		},
+		"./shared/*": {
+			"types": "./dist/shared/*.d.ts",
+			"import": "./dist/shared/*.js"
+		}
+	},
+	"files": [
+		"dist/",
+		"README.md",
+		"LICENSE"
+	],
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"ai",
+		"toolkit",
+		"automation",
+		"testing"
+	],
+	"author": "Your Name",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yourusername/mcp-mega-tool.git"
+	},
+	"bugs": {
+		"url": "https://github.com/yourusername/mcp-mega-tool/issues"
+	},
+	"homepage": "https://github.com/yourusername/mcp-mega-tool#readme",
+	"engines": {
+		"node": ">=18.0.0"
+	},
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"dev": "tsx src/index.ts",
@@ -10,7 +55,12 @@
 		"orchestrate": "tsx src/cli/orchestrate.ts",
 		"cursor:client": "tsx src/ide-plugins/cursor.ts",
 		"windsurf:client": "tsx src/ide-plugins/windsurf.ts",
-		"prepare": "husky"
+		"prepare": "husky",
+		"prepublishOnly": "npm run build",
+		"cli": "tsx src/cli/index.ts",
+		"config": "tsx src/cli/config.ts",
+		"chat": "tsx src/cli/chat.ts",
+		"enhanced-chat": "tsx src/cli/enhancedChat.ts"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "0.21.1",

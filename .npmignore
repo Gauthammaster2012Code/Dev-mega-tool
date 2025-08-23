@@ -1,0 +1,55 @@
+# Source files (only include dist/)
+src/
+tsconfig.json
+.ai-tool-rules.json
+.mcp-config.json
+
+# Development files
+node_modules/
+.git/
+.github/
+.husky/
+.lintstagedrc.json
+.prettierrc
+package.tmp
+
+# CI/CD files
+.gitlab-ci.yml
+Jenkinsfile
+
+# Test and development artifacts
+*.log
+*.tgz
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage and test reports
+coverage/
+.nyc_output/
+junit.xml
+test-results/
+
+# Build artifacts that shouldn't be published
+*.tsbuildinfo
+.build/
+temp/
+
+# Local database files
+*.db
+*.sqlite
+
+# Visual regression artifacts
+.visual/
