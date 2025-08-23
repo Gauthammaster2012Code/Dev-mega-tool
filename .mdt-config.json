@@ -1,0 +1,17 @@
+{
+  "aiProvider": "openai",
+  "apiKeys": {
+    "openai": "sk-test-noop"
+  },
+  "preferences": {},
+  "privacy": {
+    "shareWithAI": "selected"
+  },
+  "verification": [
+    {
+      "provider": "openai",
+      "ok": true,
+      "verifiedAt": "2025-08-23T12:14:09.417Z"
+    }
+  ]
+}
