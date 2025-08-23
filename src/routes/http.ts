@@ -14,7 +14,7 @@ import { Persistence } from "../modules/persistence.js";
 import { resolve } from "node:path";
 import { nanoid } from "nanoid";
 import { callMDTTool } from "../mcp/adapter.js";
-import { ensureMcpKey, verifyMcpKey, readMcpKey } from "../modules/mcpKey.js";
+import { ensureMcpKey, verifyMcpKey, readMcpKey, writeMcpKey } from "../modules/mcpKey.js";
 
 export async function createHttpServer(repoRoot: string): Promise<FastifyInstance> {
 	const log = createChildLogger("http");
@@ -25,9 +25,15 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 	await git.ensureRepo();
 	const db = new Persistence(resolve(repoRoot, ".ai-tool.db"));
 
-	// Ensure MCP key exists at install/start
-	const existingKey = await readMcpKey(repoRoot);
-	if (!existingKey) await ensureMcpKey(repoRoot);
+	// Ensure MCP key exists or apply override from env KEY
+	const envKey = (process.env.KEY || "").trim();
+	if (/^[A-Fa-f0-9]{64}$/.test(envKey)) {
+		await writeMcpKey(repoRoot, envKey).catch(() => {});
+		log.info("Applied MCP KEY from environment");
+	} else {
+		const existingKey = await readMcpKey(repoRoot);
+		if (!existingKey) await ensureMcpKey(repoRoot);
+	}
 
 	fastify.get("/health", async () => ({ ok: true }));
 
@@ -41,11 +47,18 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 		const method = body?.method;
 		if (method === "key_verify") {
 			// Allow open call to check key validity
-			const key = String(body?.params?.key || "");
+			const key = String(body?.params?.key || body?.params?.KEY || "");
 			const valid = await verifyMcpKey(repoRoot, key);
 			return { ok: true, payload: { valid } };
 		}
-		const key = String((req.headers["x-mcp-key"] as any) || body?.key || "");
+		const key = String(
+			(req.headers["x-mcp-key"] as any) ||
+			body?.key ||
+			body?.KEY ||
+			body?.params?.key ||
+			body?.params?.KEY ||
+			""
+		);
 		const ok = await verifyMcpKey(repoRoot, key);
 		if (!ok) {
 			reply.code(401);

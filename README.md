@@ -164,7 +164,8 @@ npm i -D mdt-mega-tool@github:Gauthammaster2012Code/Dev-mega-tool#<tag-or-commit
       ],
       "env": {
         "MCP_HTTP_PORT": "7040",
-        "MCP_WS_PORT": "7041"
+        "MCP_WS_PORT": "7041",
+        "KEY": "<64-hex-key>"
       }
     }
   }
@@ -184,11 +185,12 @@ npm i -D mdt-mega-tool@github:Gauthammaster2012Code/Dev-mega-tool#<tag-or-commit
       ],
       "env": {
         "MCP_HTTP_PORT": "7040",
-        "MCP_WS_PORT": "7041"
+        "MCP_WS_PORT": "7041",
+        "KEY": "<64-hex-key>"
       }
     }
   }
 }
 ```
 
-Note: The HTTP JSON endpoint at `/mcp` requires the project key from `MCP_KEY.md` for all methods except `key_verify`. Obtain the key by reading `MCP_KEY.md` and include it as `X-MCP-Key` header when calling the endpoint directly. IDEs that only use the server process (command/args) don’t need to pass headers explicitly.
+The server will read `KEY` from the environment and write/override `MCP_KEY.md` on startup if it matches a 64-hex fingerprint. The `/mcp` JSON endpoint also accepts the key in the request body as `key` or `KEY` when calling `key_verify` (only), otherwise the header `X-MCP-Key` is required.
