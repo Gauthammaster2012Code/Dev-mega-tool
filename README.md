@@ -62,3 +62,37 @@ Env vars:
 - Pluggable AI providers with local-first default and privacy-friendly keys.
 - Self-healing applies code updates and verifies via re-runs before merge/PR.
 - CI/CD pipelines integrate orchestrator into PR workflows.
+
+## MCP JSON server and project key
+
+MDT runs an HTTP JSON MCP endpoint at `POST /mcp` on the local server (see `src/index.ts` for HTTP port, default 7040). Access requires a project key stored in `MCP_KEY.md`.
+
+- On install/start, MDT creates `MCP_KEY.md` in your repo root with content:
+
+```
+KEY="<64-hex-key>"
+```
+
+- The file is set to read-only (0400) for safety. If you need to rotate the key, delete the file and restart MDT, or reinstall; a new key will be generated automatically.
+
+- Requests must include the key via header or JSON body:
+  - Header: `X-MCP-Key: <64-hex-key>`
+  - Body: `{ "key": "<64-hex-key>", "method": "callMDTTool", "params": { "toolName": "run_tests", "params": {} } }`
+
+### Example: call a tool via MCP JSON
+
+```bash
+curl -s -X POST \
+  -H "Content-Type: application/json" \
+  -H "X-MCP-Key: $(sed -n 's/KEY="\([A-Fa-f0-9]*\)"/\1/p' MCP_KEY.md)" \
+  http://localhost:7040/mcp \
+  -d '{
+    "method": "callMDTTool",
+    "params": { "toolName": "analyze_codebase", "params": {} }
+  }'
+```
+
+### Security notes
+- The key never leaves the repository; it’s generated locally and persisted in `MCP_KEY.md`.
+- Logs redact secrets.
+- The MCP endpoint returns 401 for missing/invalid keys.

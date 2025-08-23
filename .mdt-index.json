@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-08-23T10:51:30.799Z",
+  "generatedAt": "2025-08-23T10:56:59.499Z",
   "files": [
     {
       "path": "src/cicd/github-actions.ts",
@@ -95,6 +95,18 @@
       "language": "ts",
       "exports": [
         "GitOps"
+      ],
+      "hasTests": false
+    },
+    {
+      "path": "src/modules/mcpKey.ts",
+      "language": "ts",
+      "exports": [
+        "generateKey",
+        "writeMcpKey",
+        "readMcpKey",
+        "ensureMcpKey",
+        "verifyMcpKey"
       ],
       "hasTests": false
     },
@@ -265,7 +277,7 @@
     }
   ],
   "languages": {
-    "ts": 30
+    "ts": 31
   },
   "coverage": {
     "src/cicd/github-actions.ts": {
@@ -317,6 +329,10 @@
       "covered": false
     },
     "src/modules/git.ts": {
+      "tests": [],
+      "covered": false
+    },
+    "src/modules/mcpKey.ts": {
       "tests": [],
       "covered": false
     },

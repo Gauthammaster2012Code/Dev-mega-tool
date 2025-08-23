@@ -11,6 +11,7 @@
 		"cursor:client": "tsx src/ide-plugins/cursor.ts",
 		"windsurf:client": "tsx src/ide-plugins/windsurf.ts",
 		"mega-tool": "node ./bin/mdt.js",
+		"postinstall": "node ./scripts/postinstall.mjs",
 		"prepare": "husky"
 	},
 	"bin": {

@@ -12,6 +12,8 @@ import { SelfHealing } from "../modules/selfHealing.js";
 import { Persistence } from "../modules/persistence.js";
 import { resolve } from "node:path";
 import { nanoid } from "nanoid";
+import { callMDTTool } from "../mcp/adapter.js";
+import { ensureMcpKey, verifyMcpKey, readMcpKey } from "../modules/mcpKey.js";
 export async function createHttpServer(repoRoot) {
     const log = createChildLogger("http");
     const fastify = Fastify({ logger: false });
@@ -20,9 +22,30 @@ export async function createHttpServer(repoRoot) {
     const git = new GitOps(repoRoot);
     await git.ensureRepo();
     const db = new Persistence(resolve(repoRoot, ".ai-tool.db"));
+    // Ensure MCP key exists at install/start
+    const existingKey = await readMcpKey(repoRoot);
+    if (!existingKey)
+        await ensureMcpKey(repoRoot);
     fastify.get("/health", async () => ({ ok: true }));
     fastify.get("/status", async () => {
         return rules.read();
+    });
+    // JSON MCP endpoint with key validation
+    fastify.post("/mcp", async (req, reply) => {
+        const body = req.body || {};
+        const key = String(req.headers["x-mcp-key"] || body?.key || "");
+        const ok = await verifyMcpKey(repoRoot, key);
+        if (!ok) {
+            reply.code(401);
+            return { ok: false, error: "UNAUTHORIZED: invalid or missing MCP key" };
+        }
+        const method = body?.method;
+        if (method !== "callMDTTool")
+            return { ok: false, error: "Unsupported method" };
+        const toolName = body?.params?.toolName;
+        const params = body?.params?.params || {};
+        const res = await callMDTTool(toolName, params);
+        return res;
     });
     fastify.post("/run-tests", async () => {
         await rules.setTask("run-tests", "running");
