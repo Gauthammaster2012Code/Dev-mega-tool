@@ -49,17 +49,21 @@ async function orchestrate() {
 
 	// Visual pass (optional)
 	if (process.env.ORCH_VISUAL_URL) {
-		const visual = new VisualRunner(repoRoot);
-		const vr = await visual.runOnce(process.env.ORCH_VISUAL_URL, "orchestrate");
-		db.recordVisualResult(nanoid(8), {
-			url: vr.url,
-			diffPixels: vr.diffPixels,
-			width: vr.width,
-			height: vr.height,
-			baselinePath: vr.baselinePath,
-			outputPath: vr.outputPath,
-			diffPath: vr.diffPath,
-		});
+		try {
+			const visual = new VisualRunner(repoRoot);
+			const vr = await visual.runOnce(process.env.ORCH_VISUAL_URL, "orchestrate");
+			db.recordVisualResult(nanoid(8), {
+				url: vr.url,
+				diffPixels: vr.diffPixels,
+				width: vr.width,
+				height: vr.height,
+				baselinePath: vr.baselinePath,
+				outputPath: vr.outputPath,
+				diffPath: vr.diffPath,
+			});
+		} catch (err: any) {
+			logger.warn({ err: err?.message || String(err) }, "Visual step skipped (browser not available)");
+		}
 	}
 
 	// Re-run tests
