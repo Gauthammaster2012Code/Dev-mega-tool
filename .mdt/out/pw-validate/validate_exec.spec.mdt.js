@@ -8,8 +8,26 @@ import pixelmatch from 'pixelmatch';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+/**
+ * Ensure a directory exists by creating it (recursively) if necessary.
+ *
+ * Attempts to create the directory at `p` using recursive creation. On failure
+ * the function logs a warning and swallows the error (it does not throw).
+ *
+ * @param {string} p - Filesystem path of the directory to ensure exists.
+ */
 function ensureDir(p) { try { mkdirSync(p, { recursive: true }); } catch (e) { console.warn('[MDT] ensureDir failed', e?.message || String(e)); }}
 
+/**
+ * Attempt to launch a Playwright browser engine, retrying across engines and rounds.
+ *
+ * Tries to launch each engine in order [firefox, chromium, webkit] for up to `retries` rounds
+ * (0..retries). Between rounds it waits with a linear backoff of 200ms * (roundIndex + 1).
+ *
+ * @param {number} [retries=2] - Number of retry rounds (each round attempts all engines once).
+ * @returns {Promise<import('playwright').Browser>} A launched Playwright Browser instance.
+ * @throws {Error} The last encountered launch error if all attempts fail.
+ */
 async function launchWithRetry(retries = 2) {
 	let last;
 	for (let i = 0; i <= retries; i++) {
@@ -25,6 +43,16 @@ async function launchWithRetry(retries = 2) {
 	throw last;
 }
 
+/**
+ * Launches a Playwright browser, opens a page with the provided viewport, navigates to "about:blank", and returns a minimal visual result.
+ *
+ * If the environment variable `MDT_PW_SKIP` is set to `'1'`, the function returns `{ visual: null, skipped: true }` without launching a browser.
+ *
+ * @param {string} name - Logical device name for context (not used to select the browser).
+ * @param {Object} viewport - Playwright-style viewport descriptor (e.g. `{ width, height, deviceScaleFactor, isMobile?, hasTouch? }`).
+ * @return {Promise<{ visual: any|null, skipped?: boolean }>} Resolves with an object containing `visual` (currently `null`) and `skipped` when the run was skipped.
+ * @throws Rethrows any error encountered while launching the browser, creating the page, or navigating.
+ */
 async function runDevice(name, viewport) {
 	if (process.env.MDT_PW_SKIP === '1') { return { visual: null, skipped: true }; }
 	let browser;

@@ -8,8 +8,29 @@ import pixelmatch from 'pixelmatch';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+/**
+ * Ensure a directory exists by creating it and any missing parent directories.
+ *
+ * Attempts to create the directory at `p` using a recursive mkdir. If creation fails the function logs a warning
+ * prefixed with "[MDT] ensureDir failed" and the error message; it does not throw.
+ *
+ * @param {string} p - Filesystem path to create.
+ */
 function ensureDir(p) { try { mkdirSync(p, { recursive: true }); } catch (e) { console.warn('[MDT] ensureDir failed', e?.message || String(e)); }}
 
+/**
+ * Attempt to launch a Playwright browser engine, retrying across engines and iterations.
+ *
+ * Tries to launch engines in order: firefox, chromium, webkit. If an engine's
+ * launch fails, the error is recorded and the next engine is tried. If none of
+ * the engines succeed in an iteration, the function waits 200 * (iterationIndex + 1)
+ * milliseconds and retries up to `retries` times. Returns the first successfully
+ * launched browser instance.
+ *
+ * @param {number} [retries=2] - Number of retry iterations (in addition to the initial attempt).
+ * @returns {Promise<import('playwright-core').Browser>} The launched browser instance.
+ * @throws {Error} The last encountered error if all launch attempts across all engines and retries fail.
+ */
 async function launchWithRetry(retries = 2) {
 	let last;
 	for (let i = 0; i <= retries; i++) {
@@ -25,6 +46,22 @@ async function launchWithRetry(retries = 2) {
 	throw last;
 }
 
+/**
+ * Run a single device viewport test: launches a Playwright browser, opens a page at about:blank,
+ * applies the given viewport, performs an interaction (attempts a click), and returns visual result.
+ *
+ * If the environment variable `MDT_PW_SKIP` is set to `'1'` the function returns immediately with
+ * `{ visual: null, skipped: true }`.
+ *
+ * Side effects: starts a browser instance and closes it in all cases (cleanup is attempted on error).
+ *
+ * @param {string} name - Logical name of the device run (used for logging/identification).
+ * @param {{width: number, height: number, deviceScaleFactor?: number, isMobile?: boolean, hasTouch?: boolean}} viewport
+ *   - Viewport configuration to apply to the page.
+ * @returns {Promise<{visual: any|null, skipped?: boolean}>} Resolves with an object containing `visual` (currently always null)
+ *   and `skipped: true` when the run is skipped via environment variable.
+ * @throws Will rethrow any error that occurs while launching the browser, navigating, interacting, or during teardown.
+ */
 async function runDevice(name, viewport) {
 	if (process.env.MDT_PW_SKIP === '1') { return { visual: null, skipped: true }; }
 	let browser;
