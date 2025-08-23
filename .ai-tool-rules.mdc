@@ -1,0 +1,7 @@
+# AI Tool Rules
+
+- Task ownership: The tool manages branches under prefix `ai-tool/`.
+- Do not modify files while a task is `running`.
+- Preferred formatting: run the tool's formatter before committing.
+- Test policy: always re-run tests after applying fixes.
+- Visual checks: when `ORCH_VISUAL_URL` is configured, review diffs before merge.

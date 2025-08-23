@@ -9,6 +9,8 @@ export type TaskStatus = "idle" | "pending" | "running" | "complete" | "error";
 
 export interface AiToolRulesFile {
 	currentBranch: string | null;
+	// Optional path to an IDE-readable rules file (e.g., .ai-tool-rules.mdc)
+	rulesPath?: string;
 	task: {
 		id: string | null;
 		type: TaskKind;

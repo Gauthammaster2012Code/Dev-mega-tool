@@ -1,12 +1,13 @@
 import { readFile, writeFile, rename, access } from "node:fs/promises";
 import { constants } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, join } from "node:path";
 import { nanoid } from "nanoid";
 import { createChildLogger } from "../shared/logger.js";
 import type { AiToolRulesFile, TaskKind, TaskStatus } from "../shared/types.js";
 
 const DEFAULT_RULES: AiToolRulesFile = {
 	currentBranch: null,
+	rulesPath: ".ai-tool-rules.mdc",
 	task: {
 		id: null,
 		type: "idle",
@@ -26,6 +27,15 @@ const DEFAULT_RULES: AiToolRulesFile = {
 	},
 };
 
+const DEFAULT_MDC = `# AI Tool Rules
+
+- Task ownership: The tool manages branches under prefix \`ai-tool/\`.
+- Do not modify files while a task is \`running\`.
+- Preferred formatting: run the tool's formatter before committing.
+- Test policy: always re-run tests after applying fixes.
+- Visual checks: when \`ORCH_VISUAL_URL\` is configured, review diffs before merge.
+`;
+
 export class RulesFileManager {
 	private readonly filePath: string;
 	private readonly log = createChildLogger("rules-file");
@@ -39,6 +49,16 @@ export class RulesFileManager {
 			await access(this.filePath, constants.F_OK);
 		} catch {
 			await this.writeAtomic(DEFAULT_RULES);
+		}
+		// Ensure MDC rules file exists
+		try {
+			const rules = await this.read();
+			const mdcPath = resolve(dirname(this.filePath), rules.rulesPath ?? ".ai-tool-rules.mdc");
+			await access(mdcPath, constants.F_OK).catch(async () => {
+				await writeFile(mdcPath, DEFAULT_MDC, "utf8");
+			});
+		} catch (err) {
+			this.log.warn({ err }, "Failed to ensure MDC rules file");
 		}
 	}
 

@@ -1,1 +1,20 @@
-{}
+{
+  "task": {
+    "id": null,
+    "type": "run-tests",
+    "status": "complete",
+    "updatedAt": "2025-08-23T08:52:34.133Z"
+  },
+  "currentBranch": "ai-tool/orchestrate-tests-ym6od7",
+  "testResults": {
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "reportPath": ".jest-report.json",
+    "lastRunAt": "2025-08-23T08:52:34.133Z"
+  },
+  "aiFix": {
+    "status": "pending",
+    "summary": "Severity: low"
+  }
+}
