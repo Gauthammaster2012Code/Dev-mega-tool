@@ -8,8 +8,23 @@ import pixelmatch from 'pixelmatch';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+/**
+ * Ensure a directory exists by creating it (including parent directories) if necessary.
+ *
+ * Attempts to create the directory at the given path using recursive creation. If creation fails,
+ * the error is caught and a warning is logged; the function does not throw.
+ *
+ * @param {string} p - Path to the directory to ensure exists.
+ */
 function ensureDir(p) { try { mkdirSync(p, { recursive: true }); } catch (e) { console.warn('[MDT] ensureDir failed', e?.message || String(e)); }}
 
+/**
+ * Attempt to launch a Playwright browser from the available engines (firefox, chromium, webkit).
+ * Tries each engine sequentially; if none succeed, waits with a small incremental backoff and repeats up to `retries` times.
+ * @param {number} [retries=2] - Number of retry cycles after the initial attempt; each cycle tries all engines once.
+ * @returns {Promise<import('playwright-core').Browser>} A browser instance from the first engine that launches successfully.
+ * @throws {Error} The last error encountered if all launch attempts fail.
+ */
 async function launchWithRetry(retries = 2) {
 	let last;
 	for (let i = 0; i <= retries; i++) {
@@ -25,6 +40,19 @@ async function launchWithRetry(retries = 2) {
 	throw last;
 }
 
+/**
+ * Run a visual capture for a single device viewport and produce artifacts.
+ *
+ * Captures a full-page screenshot of `about:blank` using Playwright, writes the current screenshot to
+ * .mdt/out/playwright-artifacts/visual.png, and:
+ * - if no baseline exists, saves the current capture as visual.baseline.png;
+ * - if a baseline exists, computes and writes a diff to visual.diff.png and logs the number of differing pixels.
+ *
+ * @param {string} name - Friendly name for the device run (used for logging/context only).
+ * @param {import('playwright-core').ViewportSize & { deviceScaleFactor?: number, isMobile?: boolean, hasTouch?: boolean }} viewport - Viewport configuration to set on the page.
+ * @returns {Promise<{ visual: null, skipped?: boolean }>} Resolves with an object containing `visual` (always null) and `skipped: true` when the run is skipped via the MDT_PW_SKIP environment variable.
+ * @throws Will rethrow any error encountered while launching the browser, navigating, taking screenshots, or writing artifacts.
+ */
 async function runDevice(name, viewport) {
 	if (process.env.MDT_PW_SKIP === '1') { return { visual: null, skipped: true }; }
 	let browser;
