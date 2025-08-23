@@ -133,7 +133,8 @@ export async function generate_playwright_tests(params) {
         return { ok: true, payload: out };
     }
     catch (err) {
-        return { ok: false, error: { code: "MDT_GEN", message: err?.message || String(err) } };
+        const code = err?.code || 'MDT_GEN';
+        return { ok: false, error: { code, message: err?.message || String(err) } };
     }
 }
 export async function generate_property_tests() {
@@ -168,9 +169,20 @@ export async function run_playwright_specs(params) {
         return await new Promise((resolveRun) => {
             const mocha = spawn("npx", ["--yes", "mocha", "--reporter", "json", glob], { stdio: ["ignore", "pipe", "pipe"] });
             let stdout = "";
+            let killed = false;
+            const timer = setTimeout(() => { if (!killed) {
+                killed = true;
+                try {
+                    mocha.kill("SIGKILL");
+                }
+                catch { }
+            } }, Math.max(10_000, Math.min(300_000, params?.timeoutMs || 60_000)));
             mocha.stdout.on("data", (d) => (stdout += d.toString()));
-            mocha.on("error", (err) => resolveRun({ ok: false, error: { code: "MDT_PLAYWRIGHT", message: err?.message || String(err) } }));
+            mocha.on("error", (err) => { clearTimeout(timer); resolveRun({ ok: false, error: { code: "MDT_PLAYWRIGHT", message: err?.message || String(err) } }); });
             mocha.on("close", () => {
+                clearTimeout(timer);
+                if (killed)
+                    return resolveRun({ ok: false, error: { code: "MDT_PLAYWRIGHT_TIMEOUT", message: "Playwright specs timed out" } });
                 try {
                     const json = JSON.parse(stdout || "{}");
                     const payload = { passed: Number(json.stats?.passes ?? 0), failed: Number(json.stats?.failures ?? 0), skipped: Number(json.stats?.pending ?? 0), reports: { mocha: true }, raw: json };

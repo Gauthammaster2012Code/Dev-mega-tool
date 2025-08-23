@@ -1,8 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { resolve, basename } from "node:path";
 import { createChildLogger } from "../shared/logger.js";
+import { z } from "zod";
 
-export interface PWScenarioStep { type: string; selector?: string; value?: string; waitFor?: string; }
+export type StepType = "click" | "fill" | "waitFor";
+export interface PWScenarioStep { type: StepType; selector?: string; value?: string; waitFor?: string; }
 export interface PWScenario { name: string; steps: PWScenarioStep[] }
 
 export interface GeneratePlaywrightParams {
@@ -12,19 +14,68 @@ export interface GeneratePlaywrightParams {
 	outputDir?: string; // default .mdt/out/playwright
 }
 
+const stepSchema = z.object({
+	type: z.enum(["click", "fill", "waitFor"]),
+	selector: z.string().optional(),
+	value: z.string().optional(),
+	waitFor: z.string().optional(),
+});
+
+const scenarioSchema = z.object({
+	name: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
+	steps: z.array(stepSchema).max(200),
+});
+
+const paramsSchema = z.object({
+	pages: z.array(z.string().url().or(z.literal("about:blank"))).min(1).max(50),
+	scenarios: z.array(scenarioSchema).min(1).max(50),
+	visualTesting: z.boolean().optional(),
+	outputDir: z.string().optional(),
+});
+
+function escapeJsSingleQuoted(str: string): string {
+	return str
+		.replace(/\\/g, "\\\\")
+		.replace(/'/g, "\\'")
+		.replace(/\r/g, "\\r")
+		.replace(/\n/g, "\\n")
+		.replace(/\t/g, "\\t");
+}
+
+async function writeFileWithRetry(path: string, content: string, tries = 3): Promise<void> {
+	let lastErr: any;
+	for (let i = 0; i < tries; i++) {
+		try {
+			await writeFile(path, content, "utf8");
+			return;
+		} catch (err: any) {
+			lastErr = err;
+			await new Promise((r) => setTimeout(r, 50 * (i + 1)));
+		}
+	}
+	throw lastErr;
+}
+
 export class PlaywrightGenerator {
 	private readonly log = createChildLogger("playwright-gen");
 	constructor(private readonly repoRoot: string) {}
 
 	async generate(params: GeneratePlaywrightParams): Promise<{ files: string[] }> {
-		const outDir = resolve(this.repoRoot, params.outputDir || ".mdt/out/playwright");
+		const parsed = paramsSchema.safeParse(params);
+		if (!parsed.success) {
+			this.log.warn({ issues: parsed.error.issues }, "Invalid Playwright generation parameters");
+			throw Object.assign(new Error("Invalid Playwright parameters"), { code: "MDT_PLAYWRIGHT_INPUT_INVALID", details: parsed.error.issues });
+		}
+		const safe = parsed.data;
+		const outDir = resolve(this.repoRoot, safe.outputDir || ".mdt/out/playwright");
 		await mkdir(outDir, { recursive: true });
 		const files: string[] = [];
-		const template = this.buildTemplate(params.visualTesting === true);
-		for (const sc of params.scenarios) {
-			const file = resolve(outDir, `${sc.name}.spec.mdt.js`);
-			const content = template(sc, params.pages);
-			await writeFile(file, content, "utf8");
+		const template = this.buildTemplate(safe.visualTesting === true);
+		for (const sc of safe.scenarios) {
+			const safeName = sc.name; // already regex-validated
+			const file = resolve(outDir, `${safeName}.spec.mdt.js`);
+			const content = template(sc, safe.pages);
+			await writeFileWithRetry(file, content, 3);
 			files.push(file);
 			this.log.info({ file }, "Generated Playwright test");
 		}
@@ -40,20 +91,41 @@ import { firefox } from 'playwright-core';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { resolve } from 'node:path';
 
-function ensureDir(p) { try { mkdirSync(p, { recursive: true }); } catch {}}
+function ensureDir(p) { try { mkdirSync(p, { recursive: true }); } catch (e) { console.warn('[MDT] ensureDir failed', e?.message || String(e)); }}
+
+async function launchWithRetry(retries = 2) {
+	let last;
+	for (let i = 0; i <= retries; i++) {
+		try {
+			return await firefox.launch();
+		} catch (e) {
+			last = e;
+			await new Promise(r => setTimeout(r, 200 * (i + 1)));
+		}
+	}
+	throw last;
+}
 
 async function runDevice(name, viewport) {
-	const browser = await firefox.launch();
-	const page = await browser.newPage();
-	await page.setViewportSize(viewport);
-	for (const p of ${JSON.stringify(pages)}) { await page.goto(p, { waitUntil: 'networkidle' }); }
-	${scenario.steps.map((s) => this.renderStep(s)).join("\n\t")}
-	let visual = null;
-	${visual ? this.renderVisualBlock(scenario.name) : ""}
-	await browser.close();
-	return { visual };
+	if (process.env.MDT_PW_SKIP === '1') { return { visual: null, skipped: true }; }
+	let browser;
+	try {
+		browser = await launchWithRetry(2);
+		const page = await browser.newPage();
+		await page.setViewportSize(viewport);
+		for (const p of ${JSON.stringify(pages.map(p => p === "about:blank" ? p : p))}) { await page.goto(p, { waitUntil: 'networkidle' }); }
+		${scenario.steps.map((s) => this.renderStep(s)).join("\n\t\t")}
+		let visual = null;
+		${visual ? this.renderVisualBlock(scenario.name) : ""}
+		return { visual };
+	} catch (err) {
+		console.error('[MDT] runDevice failed', err && (err.stack || err.message || String(err)));
+		throw err;
+	} finally {
+		if (browser) { try { await browser.close(); } catch (e) { console.warn('[MDT] close failed', e?.message || String(e)); } }
+	}
 }
 
 describe('${scenario.name}', () => {
@@ -69,19 +141,20 @@ describe('${scenario.name}', () => {
 
 	private renderStep(step: PWScenarioStep): string {
 		switch (step.type) {
-			case "click": return `await page.click('${step.selector}');`;
-			case "fill": return `await page.fill('${step.selector}', '${step.value || ""}');`;
-			case "waitFor": return `await page.waitForSelector('${step.selector || step.waitFor}');`;
+			case "click": return `await page.click('${escapeJsSingleQuoted(step.selector || '')}');`;
+			case "fill": return `await page.fill('${escapeJsSingleQuoted(step.selector || '')}', '${escapeJsSingleQuoted(step.value || '')}');`;
+			case "waitFor": return `await page.waitForSelector('${escapeJsSingleQuoted(step.selector || step.waitFor || '')}');`;
 			default: return `// unknown step`;
 		}
 	}
 
 	private renderVisualBlock(name: string): string {
+		const safe = basename(name).replace(/[^a-zA-Z0-9_-]/g, '-');
 		return `const outDir = resolve(process.cwd(), '.mdt/out/playwright-artifacts');
 	ensureDir(outDir);
-	const currentPath = resolve(outDir, '${name}.png');
-	const baselinePath = resolve(outDir, '${name}.baseline.png');
-	const diffPath = resolve(outDir, '${name}.diff.png');
+	const currentPath = resolve(outDir, '${safe}.png');
+	const baselinePath = resolve(outDir, '${safe}.baseline.png');
+	const diffPath = resolve(outDir, '${safe}.diff.png');
 	const buffer = await page.screenshot({ fullPage: true });
 	writeFileSync(currentPath, buffer);
 	if (!existsSync(baselinePath)) { writeFileSync(baselinePath, buffer); }

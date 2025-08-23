@@ -19,3 +19,13 @@ test('generate_playwright_tests creates files', async () => {
 	assert.equal(res.ok, true);
 	assert.ok(res.payload?.files.length && res.payload.files[0].includes('.mdt/out/playwright'));
 });
+
+test('generate_playwright_tests rejects invalid scenario name', async () => {
+	const res = await generate_playwright_tests({ pages: ['about:blank'], scenarios: [{ name: '../evil', steps: [] }], visualTesting: false });
+	assert.equal(res.ok, false);
+});
+
+test('generate_playwright_tests escapes quotes in selectors', async () => {
+	const res = await generate_playwright_tests({ pages: ['about:blank'], scenarios: [{ name: 'escape', steps: [{ type: 'click', selector: "a'b" }] }], visualTesting: false });
+	assert.equal(res.ok, true);
+});

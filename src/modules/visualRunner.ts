@@ -30,11 +30,18 @@ export class VisualRunner {
 		await mkdir(dirname(outputPath), { recursive: true });
 		await mkdir(dirname(baselinePath), { recursive: true });
 
-		const browser = await firefox.launch();
-		const page = await browser.newPage();
-		await page.goto(url, { waitUntil: "networkidle" });
-		const buffer = await page.screenshot({ fullPage: true });
-		await browser.close();
+		let buffer: Buffer;
+		let browser: any;
+		try {
+			browser = await firefox.launch();
+			const page = await browser.newPage();
+			await page.goto(url, { waitUntil: "networkidle" });
+			buffer = await page.screenshot({ fullPage: true }) as any;
+		} finally {
+			if (browser) {
+				try { await browser.close(); } catch {}
+			}
+		}
 
 		await writeFile(outputPath, buffer);
 		let diffPixels = 0;

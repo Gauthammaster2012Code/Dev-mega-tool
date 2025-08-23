@@ -19,11 +19,22 @@ export class VisualRunner {
         const diffPath = resolve(cfg.cvOutputDir, `${name}.diff.png`);
         await mkdir(dirname(outputPath), { recursive: true });
         await mkdir(dirname(baselinePath), { recursive: true });
-        const browser = await firefox.launch();
-        const page = await browser.newPage();
-        await page.goto(url, { waitUntil: "networkidle" });
-        const buffer = await page.screenshot({ fullPage: true });
-        await browser.close();
+        let buffer;
+        let browser;
+        try {
+            browser = await firefox.launch();
+            const page = await browser.newPage();
+            await page.goto(url, { waitUntil: "networkidle" });
+            buffer = await page.screenshot({ fullPage: true });
+        }
+        finally {
+            if (browser) {
+                try {
+                    await browser.close();
+                }
+                catch { }
+            }
+        }
         await writeFile(outputPath, buffer);
         let diffPixels = 0;
         let width = 0;
