@@ -17,6 +17,9 @@ export { createPullRequest } from "./modules/pr.js";
 export { logger, createChildLogger } from "./shared/logger.js";
 export { eventBus } from "./shared/events.js";
 export { loadConfig } from "./shared/config.js";
+// Re-export CLI interfaces (for programmatic usage)
+export { ConfigManager } from "./cli/config.js";
+export { ChatInterface } from "./cli/chat.js";
 // Server startup function for when used as a standalone application
 export async function startServer(options) {
     const { resolve } = await import("node:path");

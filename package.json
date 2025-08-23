@@ -5,6 +5,9 @@
 	"type": "module",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"bin": {
+		"mcp": "dist/cli/index.js"
+	},
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
@@ -53,7 +56,10 @@
 		"cursor:client": "tsx src/ide-plugins/cursor.ts",
 		"windsurf:client": "tsx src/ide-plugins/windsurf.ts",
 		"prepare": "husky",
-		"prepublishOnly": "npm run build"
+		"prepublishOnly": "npm run build",
+		"cli": "tsx src/cli/index.ts",
+		"config": "tsx src/cli/config.ts",
+		"chat": "tsx src/cli/chat.ts"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "0.21.1",

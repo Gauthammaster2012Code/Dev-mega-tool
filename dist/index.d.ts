@@ -18,6 +18,8 @@ export type { AppConfig } from "./shared/config.js";
 export type { TaskKind, TaskStatus, AiToolRulesFile, TestRunResult, FixSuggestion, AIEvalFindings } from "./shared/types.js";
 export type { Logger } from "./shared/logger.js";
 export type { AIProvider } from "./modules/aiEvals.js";
+export { ConfigManager } from "./cli/config.js";
+export { ChatInterface } from "./cli/chat.js";
 export declare function startServer(options?: {
     repoRoot?: string;
     httpPort?: number;

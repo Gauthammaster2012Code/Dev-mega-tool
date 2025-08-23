@@ -2,6 +2,7 @@
 src/
 tsconfig.json
 .ai-tool-rules.json
+.mcp-config.json
 
 # Development files
 node_modules/

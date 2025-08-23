@@ -104,6 +104,58 @@ import type {
 - `Logger` - Logger type
 - `AppConfig` - Application configuration
 
+### CLI Usage
+
+After installation, use the CLI commands:
+
+```bash
+# Configure API keys
+mcp config
+
+# Start interactive chat
+mcp chat
+
+# Run orchestration pipeline
+mcp orchestrate
+
+# Start MCP server
+mcp server
+
+# Show help
+mcp help
+```
+
+#### CLI Features
+
+**Configuration Management (`mcp config`)**
+- Interactive setup for AI provider API keys
+- Support for OpenAI, Anthropic Claude, Google Gemini, Qwen/DashScope
+- Secure masked input for API keys
+- Custom endpoint configuration
+- Configuration stored in `.mcp-config.json` and `.env`
+
+**Interactive Chat (`mcp chat`)**
+- Real-time chat with configured AI providers
+- Provider switching during conversation
+- Conversation history and export
+- Built-in commands: `help`, `clear`, `history`, `provider`, `export`, `exit`
+- Fallback to Simple provider when no API keys configured
+
+### Development Scripts
+
+For development, you can also use npm scripts:
+
+```bash
+# Run CLI commands during development
+npm run cli help
+npm run config
+npm run chat
+
+# Run other commands
+npm run orchestrate
+npm start
+```
+
 ### Standalone Usage
 
 Clone and run as a standalone server:

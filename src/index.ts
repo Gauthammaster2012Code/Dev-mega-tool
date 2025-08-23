@@ -36,6 +36,10 @@ export type { Logger } from "./shared/logger.js";
 // Re-export AI provider interface
 export type { AIProvider } from "./modules/aiEvals.js";
 
+// Re-export CLI interfaces (for programmatic usage)
+export { ConfigManager } from "./cli/config.js";
+export { ChatInterface } from "./cli/chat.js";
+
 // Server startup function for when used as a standalone application
 export async function startServer(options?: {
 	repoRoot?: string;
