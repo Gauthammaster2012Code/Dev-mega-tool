@@ -4,6 +4,7 @@ import { logger } from "../shared/logger.js";
 const COMMANDS = {
     config: 'Manage API keys and configuration',
     chat: 'Interactive chat with AI providers',
+    'enhanced-chat': 'Enhanced chat with tool-calling capabilities',
     orchestrate: 'Run the full orchestration pipeline',
     server: 'Start the MCP server',
     help: 'Show this help message'
@@ -17,11 +18,12 @@ function showHelp() {
         console.log(`  ${cmd.padEnd(12)} ${desc}`);
     });
     console.log('\nExamples:');
-    console.log('  mcp config        Configure API keys');
-    console.log('  mcp chat          Start chat interface');
-    console.log('  mcp orchestrate   Run test orchestration');
-    console.log('  mcp server        Start MCP server');
-    console.log('  mcp help          Show this help');
+    console.log('  mcp config           Configure API keys');
+    console.log('  mcp chat             Start basic chat interface');
+    console.log('  mcp enhanced-chat    Start enhanced chat with tool calling');
+    console.log('  mcp orchestrate      Run test orchestration');
+    console.log('  mcp server           Start MCP server');
+    console.log('  mcp help             Show this help');
     console.log('\nFor more information about a specific command, run:');
     console.log('  mcp <command> --help');
 }
@@ -36,6 +38,11 @@ async function runCommand(command, args) {
                 const { ChatInterface } = await import('./chat.js');
                 const chat = new ChatInterface();
                 await chat.initialize();
+                break;
+            case 'enhanced-chat':
+                const { EnhancedChatInterface } = await import('./enhancedChat.js');
+                const enhancedChat = new EnhancedChatInterface();
+                await enhancedChat.initialize();
                 break;
             case 'orchestrate':
                 // Import and run the orchestrate module

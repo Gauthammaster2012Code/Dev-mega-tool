@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import "dotenv/config";
 import { createInterface } from "node:readline";
-import { SimpleAIProvider, OpenAIProvider, ClaudeProvider, GeminiProvider, QwenProvider } from "../modules/aiEvals.js";
+import { SimpleAIProvider, OpenAIProvider, ClaudeProvider, GeminiProvider, QwenProvider, DeepSeekProvider } from "../modules/aiEvals.js";
 import { ConfigManager } from "./config.js";
 import { logger } from "../shared/logger.js";
 class ChatInterface {
@@ -86,6 +86,18 @@ class ChatInterface {
                     }
                     return new QwenProvider(apiKey);
                 }
+            },
+            {
+                name: 'DeepSeek Coder',
+                key: 'deepseek',
+                provider: () => {
+                    const apiKey = config.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY;
+                    if (!apiKey) {
+                        console.log('❌ DeepSeek API key not configured. Run "mcp config" to set it up.');
+                        return null;
+                    }
+                    return new DeepSeekProvider(apiKey);
+                }
             }
         ];
         // Try to use configured default provider first
@@ -105,7 +117,7 @@ class ChatInterface {
         availableProviders.forEach((provider, index) => {
             console.log(`${index + 1}. ${provider.name}`);
         });
-        const choice = await this.promptForInput('\nSelect provider (1-5): ');
+        const choice = await this.promptForInput(`\nSelect provider (1-${availableProviders.length}): `);
         const selectedIndex = parseInt(choice) - 1;
         if (selectedIndex >= 0 && selectedIndex < availableProviders.length) {
             const selected = availableProviders[selectedIndex];

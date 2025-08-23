@@ -59,7 +59,8 @@
 		"prepublishOnly": "npm run build",
 		"cli": "tsx src/cli/index.ts",
 		"config": "tsx src/cli/config.ts",
-		"chat": "tsx src/cli/chat.ts"
+		"chat": "tsx src/cli/chat.ts",
+		"enhanced-chat": "tsx src/cli/enhancedChat.ts"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "0.21.1",

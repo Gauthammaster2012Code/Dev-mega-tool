@@ -4,7 +4,8 @@ export { createHttpServer } from "./routes/http.js";
 export { createWsServer } from "./routes/ws.js";
 // Re-export core modules
 export { TestRunner } from "./modules/testRunner.js";
-export { AIEvals, SimpleAIProvider, OpenAIProvider, GeminiProvider, ClaudeProvider, QwenProvider } from "./modules/aiEvals.js";
+export { AIEvals, SimpleAIProvider, OpenAIProvider, GeminiProvider, ClaudeProvider, QwenProvider, DeepSeekProvider } from "./modules/aiEvals.js";
+export { ToolCaller } from "./modules/toolCalling.js";
 export { GitOps } from "./modules/git.js";
 export { Formatter } from "./modules/formatter.js";
 export { VisualRunner } from "./modules/visualRunner.js";
@@ -20,6 +21,7 @@ export { loadConfig } from "./shared/config.js";
 // Re-export CLI interfaces (for programmatic usage)
 export { ConfigManager } from "./cli/config.js";
 export { ChatInterface } from "./cli/chat.js";
+export { EnhancedChatInterface } from "./cli/enhancedChat.js";
 // Server startup function for when used as a standalone application
 export async function startServer(options) {
     const { resolve } = await import("node:path");

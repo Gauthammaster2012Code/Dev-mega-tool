@@ -2,7 +2,9 @@ import "dotenv/config";
 export { createHttpServer } from "./routes/http.js";
 export { createWsServer } from "./routes/ws.js";
 export { TestRunner } from "./modules/testRunner.js";
-export { AIEvals, SimpleAIProvider, OpenAIProvider, GeminiProvider, ClaudeProvider, QwenProvider } from "./modules/aiEvals.js";
+export { AIEvals, SimpleAIProvider, OpenAIProvider, GeminiProvider, ClaudeProvider, QwenProvider, DeepSeekProvider } from "./modules/aiEvals.js";
+export { ToolCaller } from "./modules/toolCalling.js";
+export type { Tool, ToolResult } from "./modules/toolCalling.js";
 export { GitOps } from "./modules/git.js";
 export { Formatter } from "./modules/formatter.js";
 export { VisualRunner } from "./modules/visualRunner.js";
@@ -20,6 +22,7 @@ export type { Logger } from "./shared/logger.js";
 export type { AIProvider } from "./modules/aiEvals.js";
 export { ConfigManager } from "./cli/config.js";
 export { ChatInterface } from "./cli/chat.js";
+export { EnhancedChatInterface } from "./cli/enhancedChat.js";
 export declare function startServer(options?: {
     repoRoot?: string;
     httpPort?: number;

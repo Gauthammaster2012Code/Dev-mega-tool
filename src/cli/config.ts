@@ -11,9 +11,11 @@ interface Config {
 	GEMINI_API_KEY?: string;
 	GOOGLE_API_KEY?: string;
 	DASHSCOPE_API_KEY?: string;
-	AI_PROVIDER?: 'openai' | 'claude' | 'gemini' | 'qwen' | 'simple';
+	DEEPSEEK_API_KEY?: string;
+	AI_PROVIDER?: 'openai' | 'claude' | 'gemini' | 'qwen' | 'deepseek' | 'simple';
 	ANTHROPIC_BASE_URL?: string;
 	OPENAI_BASE_URL?: string;
+	DEEPSEEK_BASE_URL?: string;
 }
 
 class ConfigManager {
@@ -128,6 +130,7 @@ async function showCurrentConfig() {
 		{ key: 'GEMINI_API_KEY', name: 'Google Gemini', provider: 'gemini' },
 		{ key: 'GOOGLE_API_KEY', name: 'Google API', provider: 'gemini' },
 		{ key: 'DASHSCOPE_API_KEY', name: 'Qwen/DashScope', provider: 'qwen' },
+		{ key: 'DEEPSEEK_API_KEY', name: 'DeepSeek Coder', provider: 'deepseek' },
 	];
 
 	for (const { key, name, provider } of providers) {
@@ -153,15 +156,16 @@ async function configureProvider() {
 
 	console.log('\n🤖 Configure AI Provider');
 	console.log('========================');
-	console.log('1. OpenAI (GPT-4, GPT-3.5)');
-	console.log('2. Anthropic Claude');
-	console.log('3. Google Gemini');
-	console.log('4. Qwen/DashScope');
-	console.log('5. Simple (Local heuristic - no API key needed)');
-	console.log('6. Configure custom endpoints');
+	console.log('1. OpenAI (GPT-4o, GPT-5 when available)');
+	console.log('2. Anthropic Claude (3.5 Sonnet, Claude 4 when available)');
+	console.log('3. Google Gemini (2.0 Flash, Gemini 2.5 when available)');
+	console.log('4. Qwen/DashScope (Qwen2.5-Coder, Qwen-3 when available)');
+	console.log('5. DeepSeek Coder (Latest coding-optimized models)');
+	console.log('6. Simple (Local heuristic - no API key needed)');
+	console.log('7. Configure custom endpoints');
 	console.log('0. Back to main menu');
 
-	const choice = await configManager.promptForInput('\nSelect provider (0-6): ');
+	const choice = await configManager.promptForInput('\nSelect provider (0-7): ');
 
 	switch (choice) {
 		case '1':
@@ -177,11 +181,14 @@ async function configureProvider() {
 			await configureQwen(configManager, config);
 			break;
 		case '5':
+			await configureDeepSeek(configManager, config);
+			break;
+		case '6':
 			config.AI_PROVIDER = 'simple';
 			await configManager.saveConfig(config);
 			console.log('✅ Configured to use Simple (local heuristic) provider');
 			break;
-		case '6':
+		case '7':
 			await configureCustomEndpoints(configManager, config);
 			break;
 		case '0':
@@ -239,18 +246,34 @@ async function configureQwen(configManager: ConfigManager, config: Config) {
 	}
 }
 
+async function configureDeepSeek(configManager: ConfigManager, config: Config) {
+	console.log('\n🔑 Configure DeepSeek Coder');
+	const apiKey = await configManager.promptForInput('Enter DeepSeek API Key: ', true);
+	
+	if (apiKey) {
+		config.DEEPSEEK_API_KEY = apiKey;
+		config.AI_PROVIDER = 'deepseek';
+		await configManager.saveConfig(config);
+		console.log('✅ DeepSeek Coder configured successfully');
+	}
+}
+
 async function configureCustomEndpoints(configManager: ConfigManager, config: Config) {
 	console.log('\n🔧 Configure Custom Endpoints');
 	console.log('Leave empty to keep current value or clear');
 
 	const anthropicUrl = await configManager.promptForInput(`Anthropic Base URL (current: ${config.ANTHROPIC_BASE_URL || 'default'}): `);
 	const openaiUrl = await configManager.promptForInput(`OpenAI Base URL (current: ${config.OPENAI_BASE_URL || 'default'}): `);
+	const deepseekUrl = await configManager.promptForInput(`DeepSeek Base URL (current: ${config.DEEPSEEK_BASE_URL || 'default'}): `);
 
 	if (anthropicUrl !== undefined) {
 		config.ANTHROPIC_BASE_URL = anthropicUrl || undefined;
 	}
 	if (openaiUrl !== undefined) {
 		config.OPENAI_BASE_URL = openaiUrl || undefined;
+	}
+	if (deepseekUrl !== undefined) {
+		config.DEEPSEEK_BASE_URL = deepseekUrl || undefined;
 	}
 
 	await configManager.saveConfig(config);

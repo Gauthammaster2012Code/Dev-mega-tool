@@ -6,9 +6,11 @@ interface Config {
     GEMINI_API_KEY?: string;
     GOOGLE_API_KEY?: string;
     DASHSCOPE_API_KEY?: string;
-    AI_PROVIDER?: 'openai' | 'claude' | 'gemini' | 'qwen' | 'simple';
+    DEEPSEEK_API_KEY?: string;
+    AI_PROVIDER?: 'openai' | 'claude' | 'gemini' | 'qwen' | 'deepseek' | 'simple';
     ANTHROPIC_BASE_URL?: string;
     OPENAI_BASE_URL?: string;
+    DEEPSEEK_BASE_URL?: string;
 }
 declare class ConfigManager {
     private configPath;
