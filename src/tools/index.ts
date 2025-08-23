@@ -12,6 +12,7 @@ import { readdir } from "node:fs/promises";
 import { MdtRulesManager } from "../modules/mdtRules.js";
 import { Persistence } from "../modules/persistence.js";
 import { nanoid } from "nanoid";
+import { verifyMcpKey } from "../modules/mcpKey.js";
 
 export type ToolResult<T = any> = { ok: boolean; payload?: T; error?: { code: string; message: string; retryable?: boolean; suggestedAction?: string } };
 
@@ -190,6 +191,16 @@ export async function resolve_conflicts(params?: { strategy?: "ours" | "theirs" 
 	}
 }
 
+// Key verification (no auth required)
+export async function key_verify(params: { key?: string }): Promise<ToolResult<{ valid: boolean }>> {
+	try {
+		const valid = await verifyMcpKey(process.cwd(), params?.key || null);
+		return { ok: true, payload: { valid } };
+	} catch (err: any) {
+		return { ok: false, error: { code: "MDT_KEY", message: err?.message || String(err) } };
+	}
+}
+
 // Status tools
 export async function get_task_status(): Promise<ToolResult> {
 	const rules = new RulesFileManager(process.cwd());
@@ -297,5 +308,8 @@ export const MDT_TOOLS = {
 	
 	// Cleanup
 	cleanup_branches,
-	cleanup_status
+	cleanup_status,
+
+	// Key
+	key_verify
 };

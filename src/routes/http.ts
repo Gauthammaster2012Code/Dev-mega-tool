@@ -38,13 +38,19 @@ export async function createHttpServer(repoRoot: string): Promise<FastifyInstanc
 	// JSON MCP endpoint with key validation
 	fastify.post("/mcp", async (req, reply) => {
 		const body = (req.body as any) || {};
+		const method = body?.method;
+		if (method === "key_verify") {
+			// Allow open call to check key validity
+			const key = String(body?.params?.key || "");
+			const valid = await verifyMcpKey(repoRoot, key);
+			return { ok: true, payload: { valid } };
+		}
 		const key = String((req.headers["x-mcp-key"] as any) || body?.key || "");
 		const ok = await verifyMcpKey(repoRoot, key);
 		if (!ok) {
 			reply.code(401);
 			return { ok: false, error: "UNAUTHORIZED: invalid or missing MCP key" };
 		}
-		const method = body?.method;
 		if (method !== "callMDTTool") return { ok: false, error: "Unsupported method" };
 		const toolName = body?.params?.toolName;
 		const params = body?.params?.params || {};

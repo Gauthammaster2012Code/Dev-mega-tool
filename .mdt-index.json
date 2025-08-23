@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-08-23T10:56:59.499Z",
+  "generatedAt": "2025-08-23T11:04:41.511Z",
   "files": [
     {
       "path": "src/cicd/github-actions.ts",
@@ -259,6 +259,7 @@
         "fix_test_failures",
         "fix_code_issues",
         "resolve_conflicts",
+        "key_verify",
         "get_task_status",
         "check_active_tasks",
         "get_completed_work",

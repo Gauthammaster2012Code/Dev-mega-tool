@@ -12,6 +12,7 @@ import { readdir } from "node:fs/promises";
 import { MdtRulesManager } from "../modules/mdtRules.js";
 import { Persistence } from "../modules/persistence.js";
 import { nanoid } from "nanoid";
+import { verifyMcpKey } from "../modules/mcpKey.js";
 // Git tools
 export async function make_git_branch(params) {
     try {
@@ -189,6 +190,16 @@ export async function resolve_conflicts(params) {
         return { ok: false, error: { code: "MDT_CONFLICT", message: err?.message || String(err) } };
     }
 }
+// Key verification (no auth required)
+export async function key_verify(params) {
+    try {
+        const valid = await verifyMcpKey(process.cwd(), params?.key || null);
+        return { ok: true, payload: { valid } };
+    }
+    catch (err) {
+        return { ok: false, error: { code: "MDT_KEY", message: err?.message || String(err) } };
+    }
+}
 // Status tools
 export async function get_task_status() {
     const rules = new RulesFileManager(process.cwd());
@@ -285,6 +296,8 @@ export const MDT_TOOLS = {
     sync_ide_context,
     // Cleanup
     cleanup_branches,
-    cleanup_status
+    cleanup_status,
+    // Key
+    key_verify
 };
 //# sourceMappingURL=index.js.map
