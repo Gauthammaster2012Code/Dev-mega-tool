@@ -12,7 +12,7 @@
 		"windsurf:client": "tsx src/ide-plugins/windsurf.ts",
 		"mega-tool": "node ./bin/mdt.js",
 		"postinstall": "node ./scripts/postinstall.mjs",
-		"test": "node --test tests/**/*.test.js .mdt/out/tests/**/*.test.js",
+		"test": "node --test tests/**/*.test.js tests/**/*.test.ts .mdt/out/tests/**/*.test.js",
 		"test:watch": "node --test --watch tests/**/*.test.js tests/**/*.test.ts",
 		"prepare": "husky"
 	},

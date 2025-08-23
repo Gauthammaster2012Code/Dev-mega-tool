@@ -126,11 +126,15 @@ export async function generate_puppeteer_tests(params: { pages: string[]; scenar
 	}
 }
 
-export async function generate_playwright_tests(params: { pages: string[]; scenarios: Array<{ name: string; steps: Array<{ type: "click"|"fill"|"waitFor"; selector?: string; value?: string; waitFor?: string }> }>; visualTesting?: boolean }): Promise<ToolResult<{ files: string[] }>> {
+export async function generate_playwright_tests(params: { pages: string[]; scenarios: Array<{ name: string; steps: Array<{ type: "click"|"fill"|"waitFor"; selector?: string; value?: string; waitFor?: string }> }>; visualTesting?: boolean; outputDir?: string; validateExecution?: boolean }): Promise<ToolResult<{ files: string[]; execution?: any }>> {
 	try {
 		const gen = new PlaywrightGenerator(process.cwd());
-		const out = await gen.generate({ pages: params.pages, scenarios: params.scenarios as any, visualTesting: params.visualTesting });
-		return { ok: true, payload: out };
+		const out = await gen.generate({ pages: params.pages, scenarios: params.scenarios as any, visualTesting: params.visualTesting, outputDir: params.outputDir });
+		let execution = undefined as any;
+		if (params.validateExecution) {
+			execution = await run_playwright_specs({ glob: (params.outputDir || '.mdt/out/playwright') + '/**/*.js', timeoutMs: 30_000 });
+		}
+		return { ok: true, payload: { ...out, execution } };
 	} catch (err: any) {
 		const code = err?.code || 'MDT_GEN';
 		return { ok: false, error: { code, message: err?.message || String(err) } };

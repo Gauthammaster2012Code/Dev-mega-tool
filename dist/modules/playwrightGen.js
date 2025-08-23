@@ -2,11 +2,24 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve, basename } from "node:path";
 import { createChildLogger } from "../shared/logger.js";
 import { z } from "zod";
-const stepSchema = z.object({
+import { createRequire } from "node:module";
+import { spawnSync } from "node:child_process";
+const stepSchemaBase = z.object({
     type: z.enum(["click", "fill", "waitFor"]),
     selector: z.string().optional(),
     value: z.string().optional(),
     waitFor: z.string().optional(),
+});
+const stepSchema = stepSchemaBase.superRefine((val, ctx) => {
+    if ((val.type === "click" || val.type === "fill") && !val.selector) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `${val.type} requires selector` });
+    }
+    if (val.type === "fill" && typeof val.value !== "string") {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `fill requires value` });
+    }
+    if (val.type === "waitFor" && !(val.selector || val.waitFor)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `waitFor requires selector or waitFor` });
+    }
 });
 const scenarioSchema = z.object({
     name: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
@@ -47,6 +60,19 @@ export class PlaywrightGenerator {
         this.repoRoot = repoRoot;
     }
     async generate(params) {
+        // Dependency validation (prevent runtime crashes)
+        const require = createRequire(import.meta.url);
+        const requiredDeps = ["playwright-core", "pngjs", "pixelmatch"];
+        for (const dep of requiredDeps) {
+            try {
+                require.resolve(dep);
+            }
+            catch {
+                const msg = `Missing dependency: ${dep}. Run: npm i ${dep}`;
+                this.log.error({ dep }, msg);
+                throw Object.assign(new Error(msg), { code: "MDT_PLAYWRIGHT_DEP_MISSING", dependency: dep });
+            }
+        }
         const parsed = paramsSchema.safeParse(params);
         if (!parsed.success) {
             this.log.warn({ issues: parsed.error.issues }, "Invalid Playwright generation parameters");
@@ -65,6 +91,14 @@ export class PlaywrightGenerator {
             files.push(file);
             this.log.info({ file }, "Generated Playwright test");
         }
+        // Syntax validation (fail fast on invalid generated code)
+        for (const f of files) {
+            const res = spawnSync(process.execPath, ["--check", f], { stdio: "pipe" });
+            if (res.status !== 0) {
+                const stderr = (res.stderr || Buffer.from("")).toString();
+                throw Object.assign(new Error(`Generated invalid syntax: ${f}\n${stderr}`), { code: "MDT_PLAYWRIGHT_SYNTAX" });
+            }
+        }
         return { files };
     }
     buildTemplate(visual) {
@@ -72,7 +106,7 @@ export class PlaywrightGenerator {
 // scenario: ${scenario.name}
 // generatedAt: ${new Date().toISOString()}
 
-import { firefox } from 'playwright-core';
+import { firefox, chromium, webkit } from 'playwright-core';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -83,12 +117,14 @@ function ensureDir(p) { try { mkdirSync(p, { recursive: true }); } catch (e) { c
 async function launchWithRetry(retries = 2) {
 	let last;
 	for (let i = 0; i <= retries; i++) {
-		try {
-			return await firefox.launch();
-		} catch (e) {
-			last = e;
-			await new Promise(r => setTimeout(r, 200 * (i + 1)));
+		for (const engine of [firefox, chromium, webkit]) {
+			try {
+				return await engine.launch();
+			} catch (e) {
+				last = e;
+			}
 		}
+		await new Promise(r => setTimeout(r, 200 * (i + 1)));
 	}
 	throw last;
 }
@@ -113,7 +149,7 @@ async function runDevice(name, viewport) {
 	}
 }
 
-describe('${scenario.name}', () => {
+describe('${escapeJsSingleQuoted(scenario.name)}', () => {
 	it('desktop', async () => {
 		await runDevice('desktop', { width: 1366, height: 768, deviceScaleFactor: 1 });
 	});

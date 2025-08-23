@@ -2,6 +2,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve, basename } from "node:path";
 import { createChildLogger } from "../shared/logger.js";
 import { z } from "zod";
+import { createRequire } from "node:module";
+import { spawnSync } from "node:child_process";
 
 export type StepType = "click" | "fill" | "waitFor";
 export interface PWScenarioStep { type: StepType; selector?: string; value?: string; waitFor?: string; }
@@ -14,11 +16,23 @@ export interface GeneratePlaywrightParams {
 	outputDir?: string; // default .mdt/out/playwright
 }
 
-const stepSchema = z.object({
+const stepSchemaBase = z.object({
 	type: z.enum(["click", "fill", "waitFor"]),
 	selector: z.string().optional(),
 	value: z.string().optional(),
 	waitFor: z.string().optional(),
+});
+
+const stepSchema = stepSchemaBase.superRefine((val, ctx) => {
+	if ((val.type === "click" || val.type === "fill") && !val.selector) {
+		ctx.addIssue({ code: z.ZodIssueCode.custom, message: `${val.type} requires selector` });
+	}
+	if (val.type === "fill" && typeof val.value !== "string") {
+		ctx.addIssue({ code: z.ZodIssueCode.custom, message: `fill requires value` });
+	}
+	if (val.type === "waitFor" && !(val.selector || val.waitFor)) {
+		ctx.addIssue({ code: z.ZodIssueCode.custom, message: `waitFor requires selector or waitFor` });
+	}
 });
 
 const scenarioSchema = z.object({
@@ -61,6 +75,19 @@ export class PlaywrightGenerator {
 	constructor(private readonly repoRoot: string) {}
 
 	async generate(params: GeneratePlaywrightParams): Promise<{ files: string[] }> {
+		// Dependency validation (prevent runtime crashes)
+		const require = createRequire(import.meta.url);
+		const requiredDeps = ["playwright-core", "pngjs", "pixelmatch"] as const;
+		for (const dep of requiredDeps) {
+			try {
+				require.resolve(dep);
+			} catch {
+				const msg = `Missing dependency: ${dep}. Run: npm i ${dep}`;
+				this.log.error({ dep }, msg);
+				throw Object.assign(new Error(msg), { code: "MDT_PLAYWRIGHT_DEP_MISSING", dependency: dep });
+			}
+		}
+
 		const parsed = paramsSchema.safeParse(params);
 		if (!parsed.success) {
 			this.log.warn({ issues: parsed.error.issues }, "Invalid Playwright generation parameters");
@@ -79,6 +106,16 @@ export class PlaywrightGenerator {
 			files.push(file);
 			this.log.info({ file }, "Generated Playwright test");
 		}
+
+		// Syntax validation (fail fast on invalid generated code)
+		for (const f of files) {
+			const res = spawnSync(process.execPath, ["--check", f], { stdio: "pipe" });
+			if (res.status !== 0) {
+				const stderr = (res.stderr || Buffer.from("")).toString();
+				throw Object.assign(new Error(`Generated invalid syntax: ${f}\n${stderr}`), { code: "MDT_PLAYWRIGHT_SYNTAX" });
+			}
+		}
+
 		return { files };
 	}
 
