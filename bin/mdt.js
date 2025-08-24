@@ -14,13 +14,18 @@ const srcCliTs = resolve(here, '../src/cli/mdt.ts');
 		await import(distCli);
 		return;
 	}
-	// Prefer package-local tsx if present, otherwise fall back to npx tsx
-	const localTsx = resolve(here, '../node_modules/.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
+	// Prefer a local tsx binary if present, otherwise try project-level, then fall back to npx tsx
+	const binName = process.platform === 'win32' ? 'tsx.cmd' : 'tsx';
+	const localTsx = resolve(here, '../node_modules/.bin', binName);
+	// Parent project's .bin (e.g., <project>/node_modules/.bin)
+	const parentTsx = resolve(here, '../../.bin', binName);
 	const args = [srcCliTs, ...process.argv.slice(2)];
 	try {
 		let child;
 		if (existsSync(localTsx)) {
 			child = spawn(localTsx, args, { stdio: 'inherit' });
+		} else if (existsSync(parentTsx)) {
+			child = spawn(parentTsx, args, { stdio: 'inherit' });
 		} else {
 			const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 			child = spawn(npxCmd, ['--yes', 'tsx', ...args], { stdio: 'inherit' });

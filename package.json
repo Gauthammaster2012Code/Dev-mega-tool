@@ -1,5 +1,5 @@
 {
-	"name": "workspace",
+	"name": "mcp-mega-tool",
 	"version": "1.0.0",
 	"description": "MCP Mega-Tool",
 	"type": "module",
@@ -14,7 +14,8 @@
 		"postinstall": "node ./scripts/postinstall.mjs",
 		"test": "tsx --test tests/**/*.test.ts && node --test tests/**/*.test.js .mdt/out/tests/**/*.test.js",
 		"test:watch": "node --test --watch tests/**/*.test.js tests/**/*.test.ts",
-		"prepare": "husky"
+		"prepare": "husky && npm run build",
+		"prepack": "npm run build"
 	},
 	"bin": {
 		"mdt": "bin/mdt.js"
@@ -56,5 +57,10 @@
 		"ts-node": "10.9.2",
 		"tsx": "4.19.2",
 		"typescript": "5.6.3"
-	}
+	},
+	"files": [
+		"dist/**",
+		"bin/**",
+		"README.md"
+	]
 }

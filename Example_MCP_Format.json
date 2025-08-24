@@ -1,0 +1,327 @@
+{
+    "_comment": "MCP Mega-Tool: Local-First AI Developer Assistant Integration for AI IDEs",
+    "_description": "Configure AI IDEs (Cursor, Windsurf, Continue, etc.) to use MCP Mega-Tool as an MCP server",
+    
+    "mcpServers": {
+      "mcp-mega-tool": {
+        "command": "node",
+        "args": ["/absolute/path/to/mcp-mega-tool/dist/index.js"],
+        "env": {
+          "NODE_ENV": "production",
+          "MCP_HTTP_PORT": "7040",
+          "MCP_WS_PORT": "7041",
+          "AI_PROVIDER": "openai",
+          "OPENAI_API_KEY": "your-openai-api-key-here",
+          "ORCH_VISUAL_URL": "http://localhost:3000"
+        }
+      },
+      
+      "mcp-mega-tool-dev": {
+        "command": "npm",
+        "args": ["run", "dev"],
+        "cwd": "/absolute/path/to/mcp-mega-tool",
+        "env": {
+          "NODE_ENV": "development",
+          "MCP_HTTP_PORT": "7040",
+          "MCP_WS_PORT": "7041",
+          "AI_PROVIDER": "openai",
+          "OPENAI_API_KEY": "your-openai-api-key-here"
+        }
+      },
+      
+      "mcp-mega-tool-claude": {
+        "command": "node",
+        "args": ["/absolute/path/to/mcp-mega-tool/dist/index.js"],
+        "env": {
+          "AI_PROVIDER": "claude",
+          "ANTHROPIC_API_KEY": "your-anthropic-api-key-here",
+          "MCP_HTTP_PORT": "7040",
+          "MCP_WS_PORT": "7041"
+        }
+      },
+      
+      "mcp-mega-tool-gemini": {
+        "command": "node",
+        "args": ["/absolute/path/to/mcp-mega-tool/dist/index.js"],
+        "env": {
+          "AI_PROVIDER": "gemini",
+          "GEMINI_API_KEY": "your-gemini-api-key-here",
+          "MCP_HTTP_PORT": "7040",
+          "MCP_WS_PORT": "7041"
+        }
+      },
+      
+      "mcp-mega-tool-local": {
+        "command": "node",
+        "args": ["/absolute/path/to/mcp-mega-tool/dist/index.js"],
+        "env": {
+          "AI_PROVIDER": "local",
+          "MCP_HTTP_PORT": "7040",
+          "MCP_WS_PORT": "7041"
+        }
+      },
+      
+      "mcp-mega-tool-docker": {
+        "command": "docker",
+        "args": [
+          "run",
+          "--rm",
+          "-i",
+          "-p", "7040:7040",
+          "-p", "7041:7041",
+          "-v", "${workspaceFolder}:/workspace",
+          "-e", "OPENAI_API_KEY=your-openai-api-key-here",
+          "-e", "AI_PROVIDER=openai",
+          "mcp-mega-tool:latest"
+        ]
+      }
+    },
+    
+    "_ide_specific_configs": {
+      "cursor": {
+        "_config_location": ".cursor/mcp.json or ~/.cursor/mcp.json",
+        "mcpServers": {
+          "dev-assistant": {
+            "command": "node",
+            "args": ["/absolute/path/to/mcp-mega-tool/dist/index.js"],
+            "env": {
+              "AI_PROVIDER": "openai",
+              "OPENAI_API_KEY": "${env:OPENAI_API_KEY}",
+              "MCP_HTTP_PORT": "7040",
+              "ORCH_VISUAL_URL": "${workspaceFolder}/dist"
+            }
+          }
+        }
+      },
+      
+      "windsurf": {
+        "_config_location": ".windsurf/config.json",
+        "mcp": {
+          "servers": {
+            "mega-tool": {
+              "command": "npm",
+              "args": ["run", "dev"],
+              "cwd": "/absolute/path/to/mcp-mega-tool",
+              "env": {
+                "AI_PROVIDER": "claude",
+                "ANTHROPIC_API_KEY": "${env:ANTHROPIC_API_KEY}"
+              }
+            }
+          }
+        }
+      },
+      
+      "continue": {
+        "_config_location": "~/.continue/config.json",
+        "mcp": {
+          "servers": {
+            "mcp-mega-tool": {
+              "command": "node",
+              "args": ["/absolute/path/to/mcp-mega-tool/dist/index.js"],
+              "env": {
+                "AI_PROVIDER": "local",
+                "MCP_HTTP_PORT": "7040"
+              }
+            }
+          }
+        }
+      },
+      
+      "codeium": {
+        "_config_location": "~/.codeium/mcp.json",
+        "servers": {
+          "dev-assistant": {
+            "command": "node",
+            "args": ["/absolute/path/to/mcp-mega-tool/dist/index.js"],
+            "env": {
+              "AI_PROVIDER": "gemini",
+              "GEMINI_API_KEY": "${env:GEMINI_API_KEY}"
+            }
+          }
+        }
+      }
+    },
+    
+    "_available_tools": {
+      "test_orchestration": {
+        "description": "Automatically detect and run Jest/Mocha tests",
+        "usage": "Triggered via /run-tests endpoint or CLI orchestrator"
+      },
+      "code_analysis": {
+        "description": "AI-powered code analysis with multiple providers",
+        "usage": "Analyze codebase for issues and suggestions"
+      },
+      "self_healing": {
+        "description": "Automatically apply AI-suggested fixes",
+        "usage": "Apply fixes and verify with re-running tests"
+      },
+      "visual_regression": {
+        "description": "Playwright-based visual regression testing",
+        "usage": "Compare UI screenshots against baseline images"
+      },
+      "branch_safe_operations": {
+        "description": "Git operations on temporary branches",
+        "usage": "Ensures main work is not affected by MCP operations"
+      },
+      "formatting": {
+        "description": "Code formatting and style enforcement",
+        "usage": "Format entire codebase with consistent style"
+      }
+    },
+    
+    "_environment_variables": {
+      "required": {
+        "MCP_HTTP_PORT": "7040 (default)",
+        "MCP_WS_PORT": "7041 (default)"
+      },
+      "ai_providers": {
+        "AI_PROVIDER": "openai|claude|gemini|qwen|local",
+        "OPENAI_API_KEY": "Required for OpenAI provider",
+        "ANTHROPIC_API_KEY": "Required for Claude provider", 
+        "GEMINI_API_KEY": "Required for Gemini provider",
+        "DASHSCOPE_API_KEY": "Required for Qwen provider"
+      },
+      "optional": {
+        "ORCH_VISUAL_URL": "URL for visual regression testing",
+        "OPENAI_BASE_URL": "Custom OpenAI endpoint (Ollama/vLLM)",
+        "ANTHROPIC_BASE_URL": "Custom Anthropic endpoint"
+      }
+    },
+    
+    "_setup_instructions": {
+      "step_1": "Clone and build MCP Mega-Tool",
+      "commands": [
+        "git clone <mcp-mega-tool-repo>",
+        "cd mcp-mega-tool",
+        "npm ci",
+        "npm run build"
+      ],
+      "step_2": "Configure environment variables in IDE",
+      "step_3": "Add MCP server config to your IDE's config file",
+      "step_4": "Restart your IDE to load the MCP server",
+      "step_5": "Test connection with health check endpoint"
+    },
+    
+    "_api_endpoints": {
+      "health": {
+        "method": "GET",
+        "url": "http://localhost:7040/health",
+        "description": "Health check endpoint"
+      },
+      "status": {
+        "method": "GET", 
+        "url": "http://localhost:7040/status",
+        "description": "Get current MCP server status"
+      },
+      "run_tests": {
+        "method": "POST",
+        "url": "http://localhost:7040/run-tests",
+        "description": "Execute test suite"
+      },
+      "analyze": {
+        "method": "POST",
+        "url": "http://localhost:7040/analyze", 
+        "description": "AI-powered code analysis"
+      },
+      "apply_fixes": {
+        "method": "POST",
+        "url": "http://localhost:7040/apply-fixes",
+        "description": "Apply suggested code fixes"
+      },
+      "format": {
+        "method": "POST",
+        "url": "http://localhost:7040/format",
+        "description": "Format codebase"
+      },
+      "visual": {
+        "method": "POST",
+        "url": "http://localhost:7040/visual",
+        "description": "Run visual regression tests"
+      },
+      "orchestrate": {
+        "method": "POST",
+        "url": "http://localhost:7040/orchestrate",
+        "description": "Run full orchestration process"
+      }
+    },
+    
+    "_websocket_connection": {
+      "url": "ws://localhost:7041",
+      "description": "Real-time updates and bidirectional communication",
+      "features": [
+        "Test progress updates",
+        "Analysis results streaming", 
+        "Fix application status",
+        "Visual test results"
+      ]
+    },
+    
+    "_troubleshooting": {
+      "server_not_starting": [
+        "Check if Node.js version >= 20",
+        "Verify build completed successfully (npm run build)",
+        "Check port availability (7040, 7041)",
+        "Validate environment variables"
+      ],
+      "connection_failed": [
+        "Ensure server is running (npm run dev or node dist/index.js)",
+        "Check firewall settings for ports 7040/7041",
+        "Verify IDE config file syntax",
+        "Test HTTP endpoint manually: curl http://localhost:7040/health"
+      ],
+      "tools_not_available": [
+        "Restart IDE after configuration changes",
+        "Check MCP server logs for errors",
+        "Verify API keys are set correctly",
+        "Test endpoints manually before IDE integration"
+      ]
+    },
+    
+    "_integration_examples": {
+      "cursor_workflow": [
+        "Configure MCP server in .cursor/mcp.json",
+        "Use AI chat to trigger: 'Run tests using MCP'",
+        "Get real-time test results and analysis",
+        "Apply suggested fixes directly in editor"
+      ],
+      "windsurf_workflow": [
+        "Add server to .windsurf/config.json", 
+        "Use 'Analyze code with MCP' command",
+        "Review AI suggestions in sidebar",
+        "Apply fixes with one-click approval"
+      ],
+      "continue_workflow": [
+        "Configure in ~/.continue/config.json",
+        "Use @mcp-mega-tool in chat",
+        "Stream analysis results in real-time",
+        "Integrate with existing Continue workflows"
+      ]
+    },
+    
+    "_docker_deployment": {
+      "dockerfile_example": {
+        "FROM": "node:20-alpine",
+        "WORKDIR": "/app", 
+        "COPY": "package*.json ./",
+        "RUN": "npm ci --only=production",
+        "COPY": ". .",
+        "RUN": "npm run build",
+        "EXPOSE": "7040 7041",
+        "CMD": "node dist/index.js"
+      },
+      "docker_compose": {
+        "version": "3.8",
+        "services": {
+          "mcp-mega-tool": {
+            "build": ".",
+            "ports": ["7040:7040", "7041:7041"],
+            "environment": {
+              "AI_PROVIDER": "openai",
+              "OPENAI_API_KEY": "${OPENAI_API_KEY}"
+            },
+            "volumes": ["${PWD}:/workspace"]
+          }
+        }
+      }
+    }
+  }
